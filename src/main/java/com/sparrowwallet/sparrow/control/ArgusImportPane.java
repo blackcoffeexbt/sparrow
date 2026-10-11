@@ -87,7 +87,18 @@ public final class ArgusImportPane extends TitledDescriptionPane {
                         setError("Could not import Argus", e.getMessage());
                     }
                 });
-        ((VBox) getContent()).getChildren().add(saved);
+        Button manage = new Button("Manage connections…");
+        manage.setOnAction(
+                event -> {
+                    try {
+                        ArgusPairingDialog dialog = new ArgusPairingDialog();
+                        dialog.initOwner(getScene().getWindow());
+                        dialog.showAndWait();
+                    } catch(Exception e) {
+                        setError("Could not manage connections", e.getMessage());
+                    }
+                });
+        ((VBox) getContent()).getChildren().addAll(saved, manage);
     }
 
     private void importPairing(String json) {

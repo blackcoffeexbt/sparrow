@@ -37,7 +37,7 @@ wallet files into its test profile for the initial acceptance checks.
    automatically. No wallet PIN is needed for pairing.
 5. For an already paired Argus, choose **Use saved connection…** in the Argus
    entry's Details. Only account zero is supported: `m/84'/0'/0'` on Mainnet,
-   `m/84'/1'/0'` on Testnet4. **Tools > Argus connections…** manages saved pairs.
+   `m/84'/1'/0'` on Testnet4. **Manage connections…** in the Argus entry's Details manages saved pairs.
 6. Verify a receive address on Argus before funding. The device shows the network,
    requester, path and derived address; compare it before confirming.
 
@@ -132,8 +132,11 @@ Java 25 or newer is required. The bundle is `build/jpackage/Sparrow.app`.
 
 `io/argus/` contains the Sparrow-specific Argus API, paired-device operation
 lock, public pairing registry, keystore conversion and macOS Keychain adapter.
-`control/Argus*` contains only onboarding/PIN UI. `Hwi` delegates Argus operations
-to `ArgusApi`; transport, session cryptography and strict PSBT checks live in Lark.
+`control/Argus*` contains only onboarding/PIN UI. The shared device UI asks each
+`Device` for its signing/address service; the USB default remains `Hwi`, while `ArgusDevice` selects its own services and
+`ArgusApi`. `Hwi.signPSBT()` and `Hwi.SignPSBTService` contain no Argus branches
+or PIN/progress arguments. Transport, session cryptography and strict PSBT checks
+live in Lark.
 ArgusClient remains beside Lark's other HardwareClient implementations.
 
 The paired-device lock covers callbacks, previous-transaction lookup, account
@@ -153,3 +156,11 @@ and fails closed. Lark accepts an injected HttpClient/transport but cannot enfor
 an application's proxy policy itself. These boundaries are explicit; portable
 credential storage, proxied relay support and an independent cryptographic review
 are separate follow-up work.
+
+Remote discovery and keystore onboarding use the small `RemoteDeviceProvider`
+service registration. `RemoteDevices` supplies shared enumeration, wallet
+capability checks, import panes and shutdown without vendor-specific branches.
+The Argus provider is registered in the module descriptor and in META-INF/services
+for classpath builds. BitBox, Ledger and Coldcard retain their existing Lark/HWI
+paths unchanged. Argus has no top-level Tools menu; its connection management
+belongs to the Argus keystore import entry.

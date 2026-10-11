@@ -27,7 +27,7 @@ public class DeviceSignDialog extends DeviceDialog<PSBT> {
         EventManager.get().register(this);
         setOnCloseRequest(event -> {
             EventManager.get().unregister(this);
-            panes.forEach(DevicePane::cancelArgusSigning);
+            panes.forEach(DevicePane::cancelSigning);
         });
         setResultConverter(dialogButton -> dialogButton.getButtonData().isCancelButton() ? null : psbt);
     }

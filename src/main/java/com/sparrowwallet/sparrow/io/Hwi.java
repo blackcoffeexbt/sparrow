@@ -11,18 +11,12 @@ import com.sparrowwallet.drongo.wallet.StandardAccount;
 import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.lark.DeviceException;
 import com.sparrowwallet.lark.Lark;
-import com.sparrowwallet.lark.argus.ArgusPinProvider;
-import com.sparrowwallet.lark.argus.ArgusProgress;
 import com.sparrowwallet.lark.bitbox02.BitBoxFileNoiseConfig;
 import com.sparrowwallet.lark.trezor.TrezorFileNoiseConfig;
 import com.sparrowwallet.sparrow.AppServices;
 import com.sparrowwallet.sparrow.SparrowWallet;
-import com.sparrowwallet.sparrow.control.ArgusPinDialog;
 import com.sparrowwallet.sparrow.control.BitBoxPairingDialog;
 import com.sparrowwallet.sparrow.control.TextfieldDialog;
-import com.sparrowwallet.sparrow.io.argus.ArgusApi;
-import com.sparrowwallet.sparrow.io.argus.ArgusRegistry;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
@@ -35,14 +29,11 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
-import javafx.stage.Window;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.smartcardio.CardException;
 import javax.smartcardio.CardNotPresentException;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
@@ -52,7 +43,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 public class Hwi {
     private static final Logger log = LoggerFactory.getLogger(Hwi.class);
@@ -77,7 +67,7 @@ public class Hwi {
         List<Device> devices = new ArrayList<>();
         devices.addAll(enumerateUsb(passphrase));
         devices.addAll(enumerateCard());
-        devices.addAll(ArgusRegistry.devices());
+        devices.addAll(RemoteDevices.enumerate());
         return devices;
     }
 
@@ -176,10 +166,6 @@ public class Hwi {
     }
 
     public Map<WalletType, ExtendedKey> getXpubs(Device device, String passphrase, Map<WalletType, String> accountDerivationPaths, Map<WalletType, ExtendedKey> accountXpubs) throws ImportException {
-        if(device.getModel() == WalletModel.ARGUS) {
-            for(var entry : accountDerivationPaths.entrySet()) accountXpubs.put(entry.getKey(), getXpub(device, passphrase, entry.getValue()));
-            return accountXpubs;
-        }
         deviceLock.lock();
         try {
             for(Map.Entry<WalletType, String> entry : accountDerivationPaths.entrySet()) {
@@ -193,10 +179,6 @@ public class Hwi {
     }
 
     public ExtendedKey getXpub(Device device, String passphrase, String derivationPath) throws ImportException {
-        if(device.getModel() == WalletModel.ARGUS) {
-            try { return ArgusApi.getXpub(device, passphrase, derivationPath); }
-            catch(Exception e) { throw new ImportException(e.getMessage(), e); }
-        }
         deviceLock.lock();
         try {
             Lark lark = getLark(passphrase);
@@ -236,10 +218,6 @@ public class Hwi {
             throw new IllegalArgumentException("Cannot display address for script type " + scriptType + ": Only addressable types supported");
         }
 
-        if(device.getModel() == WalletModel.ARGUS) {
-            try { return ArgusApi.displayAddress(device, passphrase, addressDescriptor); }
-            catch(Exception e) { throw new DisplayAddressException(e.getMessage(), e); }
-        }
         deviceLock.lock();
         try {
             Lark lark = getLark(passphrase, walletDescriptor, walletName, walletRegistration);
@@ -274,19 +252,6 @@ public class Hwi {
 
     public PSBT signPSBT(Device device, String passphrase, PSBT psbt,
                          OutputDescriptor walletDescriptor, String walletName, byte[] walletRegistration) throws SignTransactionException {
-        return signPSBT(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration, progress -> {}, null);
-    }
-
-    private PSBT signPSBT(Device device, String passphrase, PSBT psbt,
-                         OutputDescriptor walletDescriptor, String walletName, byte[] walletRegistration,
-                         Consumer<ArgusProgress> progress, ArgusPinProvider pinProvider) throws SignTransactionException {
-        if(device.getModel() == WalletModel.ARGUS) {
-            try {
-                return ArgusApi.signPSBT(device, passphrase, psbt, progress, pinProvider);
-            } catch(Exception e) {
-                throw new SignTransactionException(e.getMessage(), e);
-            }
-        }
         deviceLock.lock();
         try {
             Lark lark = getLark(passphrase, walletDescriptor, walletName, walletRegistration);
@@ -582,14 +547,8 @@ public class Hwi {
         private final String walletName;
         private final byte[] walletRegistration;
         private final Set<byte[]> newDeviceRegistrations = new HashSet<>();
-        private final Window owner;
 
         public SignPSBTService(Device device, String passphrase, PSBT psbt, OutputDescriptor walletDescriptor, String walletName, byte[] walletRegistration) {
-            this(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration, null);
-        }
-
-        public SignPSBTService(Device device, String passphrase, PSBT psbt, OutputDescriptor walletDescriptor, String walletName, byte[] walletRegistration, Window owner) {
-            this.owner = owner;
             this.device = device;
             this.passphrase = passphrase;
             this.psbt = psbt;
@@ -607,8 +566,7 @@ public class Hwi {
             return new Task<>() {
                 protected PSBT call() throws SignTransactionException {
                     Hwi hwi = new Hwi();
-                    PSBT signed = hwi.signPSBT(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration, p -> updateMessage(p.status() + (p.reason().isEmpty() ? "" : " — " + p.reason())),
-                            device.getModel() == WalletModel.ARGUS ? new ArgusPinDialog(owner) : null);
+                    PSBT signed = hwi.signPSBT(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration);
                     newDeviceRegistrations.addAll(hwi.newDeviceRegistrations);
                     return signed;
                 }

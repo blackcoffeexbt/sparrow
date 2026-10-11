@@ -25,7 +25,6 @@ import com.sparrowwallet.sparrow.control.WalletPasswordDialog;
 import com.sparrowwallet.sparrow.event.*;
 import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
 import com.sparrowwallet.sparrow.io.*;
-import com.sparrowwallet.sparrow.io.argus.ArgusRegistry;
 import com.sparrowwallet.sparrow.net.*;
 import com.sparrowwallet.sparrow.net.Auth47;
 
@@ -270,7 +269,7 @@ public class AppServices {
     }
 
     public void stop() {
-        ArgusRegistry.close();
+        RemoteDevices.close();
         if(connectionService != null) {
             connectionService.cancel();
         }
@@ -1480,7 +1479,7 @@ public class AppServices {
             Wallet wallet = walletTabData.getWallet();
             Storage storage = walletTabData.getStorage();
 
-            if(Interface.get() == Interface.DESKTOP && (!storage.getWalletFile().exists() || wallet.containsSource(KeystoreSource.HW_USB) || wallet.getKeystores().stream().anyMatch(ks -> ks.getWalletModel() == WalletModel.ARGUS) || CardApi.isReaderAvailable())) {
+            if(Interface.get() == Interface.DESKTOP && (!storage.getWalletFile().exists() || wallet.containsSource(KeystoreSource.HW_USB) || wallet.getKeystores().stream().anyMatch(RemoteDevices::supports) || CardApi.isReaderAvailable())) {
                 usbWallet = true;
 
                 if(deviceEnumerateService == null) {

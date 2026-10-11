@@ -57,4 +57,6 @@ open module com.sparrowwallet.sparrow {
     requires com.sparrowwallet.lark;
     requires io.github.doblon8.jzbar;
     requires io.github.doblon8.openpnp.capture;
+    uses com.sparrowwallet.sparrow.io.RemoteDeviceProvider;
+    provides com.sparrowwallet.sparrow.io.RemoteDeviceProvider with com.sparrowwallet.sparrow.io.argus.ArgusDeviceProvider;
 }

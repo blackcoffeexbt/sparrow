@@ -1,6 +1,9 @@
 package com.sparrowwallet.sparrow.io;
 
 import com.sparrowwallet.drongo.protocol.ScriptType;
+import com.sparrowwallet.drongo.OutputDescriptor;
+import com.sparrowwallet.drongo.psbt.PSBT;
+import javafx.stage.Window;
 import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.lark.HardwareClient;
 
@@ -84,6 +87,18 @@ public class Device {
         this.card = card;
     }
 
+    public boolean isRemote() {
+        return false;
+    }
+
+    public Hwi.SignPSBTService createSigningService(String passphrase, PSBT psbt, OutputDescriptor descriptor, String walletName, byte[] registration, Window owner) {
+        return new Hwi.SignPSBTService(this, passphrase, psbt, descriptor, walletName, registration);
+    }
+
+    public Hwi.DisplayAddressService createDisplayAddressService(String passphrase, ScriptType scriptType, OutputDescriptor addressDescriptor, OutputDescriptor walletDescriptor, String walletName, byte[] registration) {
+        return new Hwi.DisplayAddressService(this, passphrase, scriptType, addressDescriptor, walletDescriptor, walletName, registration);
+    }
+
     public boolean containsWarning(String warning) {
         if(warnings != null) {
             for(String[] warns : warnings) {
@@ -99,7 +114,7 @@ public class Device {
     }
 
     public boolean supportsScriptType(ScriptType scriptType) {
-        return model == WalletModel.ARGUS ? scriptType == ScriptType.P2WPKH : supportedScriptTypes == null || supportedScriptTypes.contains(scriptType);
+        return supportedScriptTypes == null || supportedScriptTypes.contains(scriptType);
     }
 
     public String getError() {

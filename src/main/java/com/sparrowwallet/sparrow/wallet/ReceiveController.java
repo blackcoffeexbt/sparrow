@@ -1,5 +1,6 @@
 package com.sparrowwallet.sparrow.wallet;
 
+import com.sparrowwallet.sparrow.io.RemoteDevices;
 import com.google.common.eventbus.Subscribe;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -14,7 +15,6 @@ import com.sparrowwallet.drongo.wallet.BlockTransactionHashIndex;
 import com.sparrowwallet.drongo.wallet.Keystore;
 import com.sparrowwallet.drongo.wallet.KeystoreSource;
 import com.sparrowwallet.drongo.wallet.Wallet;
-import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.sparrow.AppServices;
 import com.sparrowwallet.sparrow.EventManager;
 import com.sparrowwallet.sparrow.control.*;
@@ -242,7 +242,7 @@ public class ReceiveController extends WalletFormController implements Initializ
 
             displayAddress.setUserData(addressDevices);
             return;
-        } else if(currentEntry != null && wallet.getKeystores().stream().anyMatch(keystore -> keystore.getSource().equals(KeystoreSource.HW_USB) || keystore.getWalletModel() == WalletModel.ARGUS || keystore.getSource().equals(KeystoreSource.SW_WATCH))) {
+        } else if(currentEntry != null && wallet.getKeystores().stream().anyMatch(keystore -> keystore.getSource().equals(KeystoreSource.HW_USB) || RemoteDevices.supports(keystore) || keystore.getSource().equals(KeystoreSource.SW_WATCH))) {
             displayAddress.setVisible(true);
             displayAddress.setUserData(null);
             return;
@@ -333,7 +333,7 @@ public class ReceiveController extends WalletFormController implements Initializ
                     dlg.showAndWait();
                 } else {
                     Device actualDevice = possibleDevices.get(0);
-                    Hwi.DisplayAddressService displayAddressService = new Hwi.DisplayAddressService(actualDevice, "", wallet.getScriptType(), addressDescriptor,
+                    Hwi.DisplayAddressService displayAddressService = actualDevice.createDisplayAddressService("", wallet.getScriptType(), addressDescriptor,
                             OutputDescriptor.getOutputDescriptor(walletForm.getWallet()), walletForm.getWallet().getFullName(), getDeviceRegistration(actualDevice));
                     displayAddressService.setOnSucceeded(successEvent -> {
                         updateDeviceRegistrations(actualDevice, displayAddressService.getNewDeviceRegistrations());

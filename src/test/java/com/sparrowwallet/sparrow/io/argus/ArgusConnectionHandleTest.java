@@ -17,8 +17,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-class ArgusDeviceTest {
-    private ArgusDevice device() throws Exception {
+class ArgusConnectionHandleTest {
+    private ArgusConnectionHandle device() throws Exception {
         var fixture =
                 new ObjectMapper()
                         .readTree(getClass().getResourceAsStream("/argus/psbt-fixture.json"));
@@ -52,7 +52,7 @@ class ArgusDeviceTest {
                     @Override
                     public void close() {}
                 };
-        return new ArgusDevice(
+        return new ArgusConnectionHandle(
                 new ArgusClient(
                         new ArgusConnection(
                                 identity,
@@ -86,7 +86,7 @@ class ArgusDeviceTest {
                                         client -> {
                                             fail(
                                                     "A competing operation must not replace the"
-                                                        + " first operation's callbacks");
+                                                            + " first operation's callbacks");
                                             return null;
                                         }));
             } finally {

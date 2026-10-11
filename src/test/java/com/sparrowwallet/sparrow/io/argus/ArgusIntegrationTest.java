@@ -7,14 +7,19 @@ import com.sparrowwallet.drongo.KeyDerivation;
 import com.sparrowwallet.drongo.Network;
 import com.sparrowwallet.drongo.policy.PolicyType;
 import com.sparrowwallet.drongo.protocol.ScriptType;
+import com.sparrowwallet.drongo.psbt.PSBT;
 import com.sparrowwallet.drongo.wallet.*;
 import com.sparrowwallet.lark.argus.ArgusAccount;
 import com.sparrowwallet.lark.argus.ArgusNetwork;
 import com.sparrowwallet.sparrow.io.Device;
+import com.sparrowwallet.sparrow.io.Hwi;
+import com.sparrowwallet.sparrow.io.RemoteDeviceProvider;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Base64;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.UUID;
 
 class ArgusIntegrationTest {
@@ -50,9 +55,30 @@ class ArgusIntegrationTest {
         assertFalse(encoded.contains("secret"));
         assertFalse(encoded.contains("\"pin\""));
         assertEquals(record, mapper.readValue(encoded, ArgusRegistry.Pairing.class));
-        Device device = new Device();
-        device.setModel(WalletModel.ARGUS);
+        Device device = new ArgusDevice(record);
         assertTrue(device.supportsScriptType(ScriptType.P2WPKH));
+        assertTrue(device.isRemote());
+        PSBT psbt = new PSBT(Base64.getDecoder().decode(fixture.path("unsigned").asText()));
+        assertInstanceOf(
+                ArgusSigningService.class,
+                device.createSigningService("", psbt, null, "fixture", null, null));
+        assertInstanceOf(
+                ArgusDisplayAddressService.class,
+                device.createDisplayAddressService(
+                        "", ScriptType.P2WPKH, null, null, "fixture", null));
+        Device usb = new Device();
+        usb.setModel(WalletModel.LEDGER_NANO_S);
+        assertFalse(usb.isRemote());
+        assertEquals(
+                Hwi.SignPSBTService.class,
+                usb.createSigningService("", psbt, null, "fixture", null, null).getClass());
+        assertEquals(
+                Hwi.DisplayAddressService.class,
+                usb.createDisplayAddressService("", ScriptType.P2WPKH, null, null, "fixture", null)
+                        .getClass());
+        assertTrue(
+                ServiceLoader.load(RemoteDeviceProvider.class).stream()
+                        .anyMatch(provider -> provider.type() == ArgusDeviceProvider.class));
         assertFalse(device.supportsScriptType(ScriptType.P2TR));
         assertFalse(device.supportsScriptType(ScriptType.P2WSH));
         assertEquals("argus", WalletModel.ARGUS.getType());

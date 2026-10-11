@@ -1,43 +1,62 @@
 package com.sparrowwallet.sparrow.io.argus;
 
-import com.sparrowwallet.lark.ArgusClient;
-import com.sparrowwallet.lark.DeviceException;
+import com.sparrowwallet.drongo.OutputDescriptor;
+import com.sparrowwallet.drongo.protocol.ScriptType;
+import com.sparrowwallet.drongo.psbt.PSBT;
+import com.sparrowwallet.drongo.wallet.WalletModel;
+import com.sparrowwallet.sparrow.io.Device;
+import com.sparrowwallet.sparrow.io.Hwi;
 
-import java.util.concurrent.locks.ReentrantLock;
+import javafx.stage.Window;
 
-/** Keeps callbacks and the entire host operation exclusive to one paired signer. */
-final class ArgusDevice implements AutoCloseable {
-    private final ArgusClient client;
-    private final ReentrantLock operationLock = new ReentrantLock();
-    private volatile boolean closed;
-
-    ArgusDevice(ArgusClient client) {
-        this.client = client;
-    }
-
-    <T> T execute(Operation<T> operation) throws Exception {
-        if(!operationLock.tryLock()) {
-            throw new DeviceException("An Argus request is already active");
-        }
-
-        try {
-            if(closed) {
-                throw new DeviceException("Argus connection closed");
-            }
-            return operation.apply(client);
-        } finally {
-            operationLock.unlock();
-        }
+/** Selects Argus services without adding protocol branches to the shared HWI UI. */
+public final class ArgusDevice extends Device {
+    public ArgusDevice(ArgusRegistry.Pairing pairing) {
+        setType("argus");
+        setPath(pairing.path());
+        setModel(WalletModel.ARGUS);
+        setFingerprint(pairing.account().fingerprint());
+        setNeedsPinSent(false);
+        setNeedsPassphraseSent(false);
     }
 
     @Override
-    public void close() {
-        closed = true;
-        client.getConnection().close();
+    public boolean isRemote() {
+        return true;
     }
 
-    @FunctionalInterface
-    interface Operation<T> {
-        T apply(ArgusClient client) throws Exception;
+    @Override
+    public boolean supportsScriptType(ScriptType scriptType) {
+        return scriptType == ScriptType.P2WPKH;
+    }
+
+    @Override
+    public Hwi.SignPSBTService createSigningService(
+            String passphrase,
+            PSBT psbt,
+            OutputDescriptor descriptor,
+            String walletName,
+            byte[] registration,
+            Window owner) {
+        return new ArgusSigningService(
+                this, passphrase, psbt, descriptor, walletName, registration, owner);
+    }
+
+    @Override
+    public Hwi.DisplayAddressService createDisplayAddressService(
+            String passphrase,
+            ScriptType scriptType,
+            OutputDescriptor addressDescriptor,
+            OutputDescriptor walletDescriptor,
+            String walletName,
+            byte[] registration) {
+        return new ArgusDisplayAddressService(
+                this,
+                passphrase,
+                scriptType,
+                addressDescriptor,
+                walletDescriptor,
+                walletName,
+                registration);
     }
 }

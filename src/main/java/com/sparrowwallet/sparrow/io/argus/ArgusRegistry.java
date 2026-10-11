@@ -2,7 +2,6 @@ package com.sparrowwallet.sparrow.io.argus;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparrowwallet.drongo.Network;
-import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.lark.ArgusClient;
 import com.sparrowwallet.lark.argus.*;
 import com.sparrowwallet.sparrow.AppServices;
@@ -56,7 +55,7 @@ public final class ArgusRegistry {
                     .enable(
                             com.fasterxml.jackson.core.JsonParser.Feature
                                     .STRICT_DUPLICATE_DETECTION);
-    private static final Map<String, ArgusDevice> clients = new ConcurrentHashMap<>();
+    private static final Map<String, ArgusConnectionHandle> clients = new ConcurrentHashMap<>();
 
     private ArgusRegistry() {}
 
@@ -131,7 +130,7 @@ public final class ArgusRegistry {
             throw new IllegalStateException("Argus is already paired, or the pairing list is full");
         records.add(record);
         save(records);
-        clients.put(record.path(), new ArgusDevice(new ArgusClient(connection)));
+        clients.put(record.path(), new ArgusConnectionHandle(new ArgusClient(connection)));
     }
 
     public static List<Device> devices() {
@@ -145,13 +144,7 @@ public final class ArgusRegistry {
             return result;
         }
         for(Pairing p : pairings) {
-            Device device = new Device();
-            device.setType("argus");
-            device.setPath(p.path());
-            device.setModel(WalletModel.ARGUS);
-            device.setFingerprint(p.account().fingerprint());
-            device.setNeedsPinSent(false);
-            device.setNeedsPassphraseSent(false);
+            Device device = new ArgusDevice(p);
             result.add(device);
         }
         return result;
@@ -178,7 +171,7 @@ public final class ArgusRegistry {
         return new ArgusConnection(identity, signer, network(), pin, transport);
     }
 
-    static synchronized ArgusDevice device(Device device) {
+    static synchronized ArgusConnectionHandle device(Device device) {
         if(stopped) throw new IllegalStateException("Argus connections are shutting down");
         privacyCheck();
         String path = device.getPath();
@@ -187,12 +180,12 @@ public final class ArgusRegistry {
                         .filter(p -> p.path().equals(path))
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("Argus pairing was removed"));
-        ArgusDevice existing = clients.get(path);
+        ArgusConnectionHandle existing = clients.get(path);
         if(existing != null) return existing;
         byte[] identity = ArgusKeychain.load(pairing.credentialId());
         try {
-            ArgusDevice client =
-                    new ArgusDevice(
+            ArgusConnectionHandle client =
+                    new ArgusConnectionHandle(
                             new ArgusClient(
                                     connect(
                                             identity,
@@ -207,7 +200,7 @@ public final class ArgusRegistry {
     }
 
     public static synchronized void forget(Pairing pairing) throws Exception {
-        ArgusDevice client = clients.remove(pairing.path());
+        ArgusConnectionHandle client = clients.remove(pairing.path());
         if(client != null) client.close();
         List<Pairing> records = new ArrayList<>(pairings());
         records.removeIf(p -> p.credentialId().equals(pairing.credentialId()));
@@ -218,7 +211,7 @@ public final class ArgusRegistry {
 
     public static synchronized void close() {
         stopped = true;
-        clients.values().forEach(ArgusDevice::close);
+        clients.values().forEach(ArgusConnectionHandle::close);
         clients.clear();
     }
 }
