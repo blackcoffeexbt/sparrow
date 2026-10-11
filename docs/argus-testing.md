@@ -249,3 +249,12 @@ approval/reconnect behavior. No real credentials were read, hardware flashed,
 storage erased, transactions broadcast, builds published or branches pushed.
 The acceptance checklist above still applies. Cancelling a host worker stops
 waiting; it does not revoke a signing request already delivered to Argus.
+
+## Firmware response compatibility
+
+Secure firmware responses bind `expires` in the outer packet and the session
+transcript, without repeating it inside the encrypted response body. Lark checks
+the outer deadline unconditionally and checks an inner deadline when present.
+The synthetic signer uses this firmware format for progress, unlock replies and
+results, so tests catch dropped PIN prompts and stalled signing caused by an
+incorrect requirement for an inner expiry field.

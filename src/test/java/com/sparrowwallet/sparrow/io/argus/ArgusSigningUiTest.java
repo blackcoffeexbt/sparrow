@@ -6,6 +6,8 @@ import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.ButtonType;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -123,6 +125,40 @@ class ArgusSigningUiTest {
             assertFalse(window.join().isShowing());
             assertEquals("", input.join().getText());
         });
+    }
+
+    @Test
+    void pinPromptIsVisibleAboveAnOwnedSigningDialog() throws Exception {
+        var signing = new CompletableFuture<Dialog<Void>>();
+        var prompt = new CompletableFuture<ArgusPinDialog>();
+        var pin = new CompletableFuture<CompletableFuture<char[]>>();
+        fx(() -> {
+            Stage wallet = signingWindow();
+            Dialog<Void> signer = new Dialog<>();
+            signer.setTitle("Synthetic owned signing dialog");
+            signer.initOwner(wallet);
+            signer.initModality(Modality.NONE);
+            signer.getDialogPane().setContent(new StackPane());
+            signer.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+            Stage owner = (Stage)signer.getDialogPane().getScene().getWindow();
+            owner.setAlwaysOnTop(true);
+            signer.show();
+            signing.complete(signer);
+            prompt.complete(new ArgusPinDialog(owner));
+            pin.complete(prompt.join().requestPin(status()).toCompletableFuture());
+        });
+        fx(() -> {
+            Stage stage = (Stage)Window.getWindows().stream()
+                    .filter(w -> w instanceof Stage s && s.getTitle().equals("Unlock Argus for signing"))
+                    .findFirst().orElseThrow();
+            assertSame(signing.join().getDialogPane().getScene().getWindow(), stage.getOwner());
+            assertTrue(stage.isShowing());
+            assertTrue(stage.getWidth() > 0 && stage.getHeight() > 0);
+            assertTrue(Double.isFinite(stage.getX()) && Double.isFinite(stage.getY()));
+            prompt.join().cancelPinPrompt();
+        });
+        assertNull(pin.get().get(10, TimeUnit.SECONDS));
+        fx(() -> signing.join().close());
     }
 
     @Test
