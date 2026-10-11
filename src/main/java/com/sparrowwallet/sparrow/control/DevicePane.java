@@ -79,7 +79,8 @@ public class DevicePane extends TitledDescriptionPane {
     private Hwi.SignPSBTService activeSignService;
     public void cancelArgusSigning() {
         if(device.getModel() == WalletModel.ARGUS && activeSignService != null && activeSignService.isRunning()) {
-            activeSignService.cancel(); com.sparrowwallet.sparrow.io.ArgusRegistry.cancelSigning(device.getPath());
+            // Service cancellation interrupts only this operation's worker.
+            activeSignService.cancel();
         }
     }
 
@@ -887,7 +888,7 @@ public class DevicePane extends TitledDescriptionPane {
             }
         } else {
             Hwi.SignPSBTService signPSBTService = new Hwi.SignPSBTService(device, passphrase.get(), psbt,
-                    OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration());
+                    OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration(), getScene().getWindow());
             activeSignService = signPSBTService;
             signPSBTService.messageProperty().addListener((_, _, value) -> setDescription(value));
             signPSBTService.setOnSucceeded(workerStateEvent -> {

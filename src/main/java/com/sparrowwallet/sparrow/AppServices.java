@@ -12,23 +12,23 @@ import com.sparrowwallet.drongo.crypto.EncryptionType;
 import com.sparrowwallet.drongo.crypto.InvalidPasswordException;
 import com.sparrowwallet.drongo.crypto.Key;
 import com.sparrowwallet.drongo.policy.PolicyType;
-import com.sparrowwallet.drongo.wallet.*;
-import com.sparrowwallet.sparrow.control.DialogImage;
-import com.sparrowwallet.sparrow.control.WalletPasswordDialog;
-import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
-import com.sparrowwallet.sparrow.net.Auth47;
 import com.sparrowwallet.drongo.protocol.BlockHeader;
 import com.sparrowwallet.drongo.protocol.ScriptType;
 import com.sparrowwallet.drongo.protocol.Sha256Hash;
 import com.sparrowwallet.drongo.protocol.Transaction;
 import com.sparrowwallet.drongo.psbt.PSBT;
 import com.sparrowwallet.drongo.uri.BitcoinURI;
+import com.sparrowwallet.drongo.wallet.*;
+import com.sparrowwallet.sparrow.control.DialogImage;
 import com.sparrowwallet.sparrow.control.TrayManager;
+import com.sparrowwallet.sparrow.control.WalletPasswordDialog;
 import com.sparrowwallet.sparrow.event.*;
+import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
 import com.sparrowwallet.sparrow.io.*;
+import com.sparrowwallet.sparrow.io.argus.ArgusRegistry;
 import com.sparrowwallet.sparrow.net.*;
-import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
-import io.reactivex.subjects.PublishSubject;
+import com.sparrowwallet.sparrow.net.Auth47;
+
 import javafx.application.Application;
 import javafx.application.ColorScheme;
 import javafx.application.Platform;
@@ -53,6 +53,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
+
 import org.controlsfx.glyphfont.Glyph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
+import io.reactivex.subjects.PublishSubject;
 
 import static com.sparrowwallet.sparrow.AppController.CONNECTION_FAILED_PREFIX;
 import static com.sparrowwallet.sparrow.control.DownloadVerifierDialog.*;
@@ -266,7 +270,7 @@ public class AppServices {
     }
 
     public void stop() {
-        com.sparrowwallet.sparrow.io.ArgusRegistry.close();
+        ArgusRegistry.close();
         if(connectionService != null) {
             connectionService.cancel();
         }

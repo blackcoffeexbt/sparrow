@@ -2,7 +2,10 @@ rootProject.name = 'sparrow'
 include 'drongo'
 include 'lark'
 
-
 // Independent Argus development checkouts; upstream submodule defaults remain supported.
-if(providers.gradleProperty('drongoDir').isPresent()) project(':drongo').projectDir = file(providers.gradleProperty('drongoDir').get())
-if(providers.gradleProperty('larkDir').isPresent()) project(':lark').projectDir = file(providers.gradleProperty('larkDir').get())
+if(providers.gradleProperty('drongoDir').isPresent()) {
+    project(':drongo').projectDir = file(providers.gradleProperty('drongoDir').get())
+}
+if(providers.gradleProperty('larkDir').isPresent()) {
+    project(':lark').projectDir = file(providers.gradleProperty('larkDir').get())
+}

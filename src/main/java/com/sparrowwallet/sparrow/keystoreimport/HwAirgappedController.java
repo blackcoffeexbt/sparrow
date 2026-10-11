@@ -1,18 +1,22 @@
 package com.sparrowwallet.sparrow.keystoreimport;
 
 import com.sparrowwallet.drongo.policy.PolicyType;
-import com.sparrowwallet.sparrow.control.CardImportPane;
-import com.sparrowwallet.sparrow.control.ArgusImportPane;
 import com.sparrowwallet.drongo.wallet.WalletModel;
+import com.sparrowwallet.sparrow.control.ArgusImportPane;
+import com.sparrowwallet.sparrow.control.CardImportPane;
 import com.sparrowwallet.sparrow.control.FileKeystoreImportPane;
 import com.sparrowwallet.sparrow.control.TitledDescriptionPane;
 import com.sparrowwallet.sparrow.io.*;
+import com.sparrowwallet.sparrow.io.argus.ArgusKeychain;
+import com.sparrowwallet.sparrow.io.argus.ArgusKeystore;
 import com.sparrowwallet.sparrow.io.ckcard.Satschip;
 import com.sparrowwallet.sparrow.io.ckcard.Tapsigner;
 import com.sparrowwallet.sparrow.io.keycard.Keycard;
 import com.sparrowwallet.sparrow.io.satochip.Satochip;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Accordion;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +47,7 @@ public class HwAirgappedController extends KeystoreImportDetailController {
             }
         }
 
-        if(ArgusKeystore.supports(getMasterController().getWallet()) &&
+        if(ArgusKeychain.isAvailable() && ArgusKeystore.supports(getMasterController().getWallet()) &&
                 (getMasterController().getRequiredModel() == null || getMasterController().getRequiredModel() == WalletModel.ARGUS)) {
             importAccordion.getPanes().add(new ArgusImportPane(getMasterController().getWallet(), getMasterController().getRequiredDerivation()));
         }

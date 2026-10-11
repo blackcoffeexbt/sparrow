@@ -15,7 +15,7 @@ Sparrow.app/Contents/MacOS/Sparrow -d /absolute/path/to/argus-test-home -n testn
 ```
 
 The launcher uses a new `argus-test-home` next to itself, opens Testnet4, and starts
-an untouched profile offline. It does not read the normal Sparrow profile. Match
+a fresh profile offline. It does not read the normal Sparrow profile. Match
 the network to the **installed** Argus firmware: firmware network is build-time
 only. For Mainnet, use `-n mainnet` with a separate profile, or restart the test app
 in Mainnet through Tools. Pair independently for each network.
@@ -91,7 +91,7 @@ message signing, relative/time-based timelocks or silent payments are supported.
 Fee replacements count their full debit again under the device's existing
 no-refund spending policy.
 
-This first macOS integration uses direct `wss://` relay connections. It **refuses
+The macOS integration uses direct `wss://` relay connections. It **refuses
 Argus operations while Sparrow's Tor/SOCKS proxy is active**, rather than sending
 around it. Proxy support and non-macOS credential storage remain future work.
 Other paired companion clients can supply quorum approvals; this build does not
@@ -112,7 +112,9 @@ add an Argus approver UI.
 
 Automated checks use synthetic identities, PINs and PSBTs. They do not access real
 Keychain credentials, devices, relays or broadcasters. A successful build is not
-physical interoperability verification.
+physical interoperability verification. A local Testnet4 pairing and signing
+round trip was confirmed by the tester; broader device and failure-path
+acceptance checks still need to be completed.
 
 ## Rebuild
 
@@ -125,3 +127,29 @@ submodules. Upstream's dependency gitlinks are unchanged. Supply their paths:
 ```
 
 Java 25 or newer is required. The bundle is `build/jpackage/Sparrow.app`.
+
+## Code structure and review boundaries
+
+`io/argus/` contains the Sparrow-specific Argus API, paired-device operation
+lock, public pairing registry, keystore conversion and macOS Keychain adapter.
+`control/Argus*` contains only onboarding/PIN UI. `Hwi` delegates Argus operations
+to `ArgusApi`; transport, session cryptography and strict PSBT checks live in Lark.
+ArgusClient remains beside Lark's other HardwareClient implementations.
+
+The paired-device lock covers callbacks, previous-transaction lookup, account
+refresh and signing together. Competing operations fail before replacing an
+active request's PIN/progress callbacks. Closing a signing dialog interrupts only
+its own worker; it cannot cancel another window's request. The PIN dialog is owned
+by that signing window, is window-modal, and inherits its always-on-top setting.
+
+Drongo's `WalletModel.ARGUS` addition is a prerequisite for the Lark and Sparrow
+changes. Keep upstream dependency gitlinks untouched until compatible revisions
+are available. Local `drongoDir`/`larkDir` Gradle overrides support independent
+checkouts during review. All source repositories remain independent.
+
+Known review limits: Sparrow's credential adapter is macOS-only and the Argus
+import entry is hidden on other platforms. Tor/SOCKS relay routing is unsupported
+and fails closed. Lark accepts an injected HttpClient/transport but cannot enforce
+an application's proxy policy itself. These boundaries are explicit; portable
+credential storage, proxied relay support and an independent cryptographic review
+are separate follow-up work.

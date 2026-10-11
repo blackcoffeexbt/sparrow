@@ -7,5 +7,7 @@ The documentation here is mainly developer-related resources.
 
 Documentation to create and verify a build of the project against the released binaries.
 
+### [Argus integration and testing](argus-testing.md)
 
-
+Nostr pairing, signing and receive-address verification, including platform and
+privacy limits, code ownership, dependency requirements and acceptance checks.

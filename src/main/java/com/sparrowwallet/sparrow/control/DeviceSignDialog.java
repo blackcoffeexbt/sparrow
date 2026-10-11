@@ -6,9 +6,11 @@ import com.sparrowwallet.drongo.wallet.Wallet;
 import com.sparrowwallet.sparrow.EventManager;
 import com.sparrowwallet.sparrow.event.PSBTSignedEvent;
 import com.sparrowwallet.sparrow.io.Device;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DeviceSignDialog extends DeviceDialog<PSBT> {
@@ -16,7 +18,7 @@ public class DeviceSignDialog extends DeviceDialog<PSBT> {
 
     private final Wallet wallet;
     private final PSBT psbt;
-    private final java.util.List<DevicePane> panes = new java.util.ArrayList<>();
+    private final List<DevicePane> panes = new ArrayList<>();
 
     public DeviceSignDialog(Wallet wallet, List<String> operationFingerprints, PSBT psbt) {
         super(operationFingerprints);
@@ -32,7 +34,9 @@ public class DeviceSignDialog extends DeviceDialog<PSBT> {
 
     @Override
     protected DevicePane getDevicePane(Device device, boolean defaultDevice) {
-        DevicePane pane = new DevicePane(wallet, psbt, device, defaultDevice); panes.add(pane); return pane;
+        DevicePane pane = new DevicePane(wallet, psbt, device, defaultDevice);
+        panes.add(pane);
+        return pane;
     }
 
     @Subscribe

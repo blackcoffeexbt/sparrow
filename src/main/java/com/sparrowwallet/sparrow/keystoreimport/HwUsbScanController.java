@@ -1,9 +1,11 @@
 package com.sparrowwallet.sparrow.keystoreimport;
 
+import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.sparrow.EventManager;
 import com.sparrowwallet.sparrow.event.UsbDeviceEvent;
 import com.sparrowwallet.sparrow.io.Device;
 import com.sparrowwallet.sparrow.io.Hwi;
+
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,7 +33,7 @@ public class HwUsbScanController extends KeystoreImportDetailController {
         Hwi.EnumerateService enumerateService = new Hwi.EnumerateService(null);
         enumerateService.setOnSucceeded(workerStateEvent -> {
             List<Device> allDevices = enumerateService.getValue();
-            List<Device> devices = allDevices.stream().filter(d -> d.getModel() != com.sparrowwallet.drongo.wallet.WalletModel.ARGUS).toList();
+            List<Device> devices = allDevices.stream().filter(d -> d.getModel() != WalletModel.ARGUS).toList();
             if(devices.isEmpty()) {
                 getMasterController().showUsbNone();
             } else {

@@ -19,20 +19,21 @@ import com.sparrowwallet.sparrow.control.*;
 import com.sparrowwallet.sparrow.event.*;
 import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
 import com.sparrowwallet.sparrow.io.*;
+import com.sparrowwallet.sparrow.io.argus.ArgusKeychain;
 import com.sparrowwallet.sparrow.io.bbqr.BBQR;
 import com.sparrowwallet.sparrow.io.bbqr.BBQRType;
 import com.sparrowwallet.sparrow.net.ElectrumServer;
 import com.sparrowwallet.sparrow.net.ServerType;
-import com.sparrowwallet.sparrow.settings.SettingsGroup;
-import com.sparrowwallet.sparrow.settings.SettingsDialog;
 import com.sparrowwallet.sparrow.paynym.PayNymDialog;
+import com.sparrowwallet.sparrow.settings.SettingsDialog;
+import com.sparrowwallet.sparrow.settings.SettingsGroup;
 import com.sparrowwallet.sparrow.transaction.TransactionController;
 import com.sparrowwallet.sparrow.transaction.TransactionData;
 import com.sparrowwallet.sparrow.transaction.TransactionView;
 import com.sparrowwallet.sparrow.wallet.Entry;
 import com.sparrowwallet.sparrow.wallet.WalletController;
 import com.sparrowwallet.sparrow.wallet.WalletForm;
-import de.jangassen.MenuToolkit;
+
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -60,6 +61,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.util.Duration;
+
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.StatusBar;
 import org.controlsfx.glyphfont.FontAwesome;
@@ -75,6 +77,8 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import de.jangassen.MenuToolkit;
 
 import static com.sparrowwallet.sparrow.AppServices.*;
 import static com.sparrowwallet.sparrow.control.DownloadVerifierDialog.*;
@@ -411,9 +415,10 @@ public class AppController implements Initializable {
         preventSleep.selectedProperty().bindBidirectional(preventSleepProperty);
 
         MenuItem argusConnections = new MenuItem("Argus connections…");
-        argusConnections.setDisable(Network.get() != Network.MAINNET && Network.get() != Network.TESTNET4);
+        argusConnections.setDisable(!ArgusKeychain.isAvailable() ||
+                (Network.get() != Network.MAINNET && Network.get() != Network.TESTNET4));
         argusConnections.setOnAction(event -> {
-            try { new com.sparrowwallet.sparrow.control.ArgusPairingDialog().showAndWait(); }
+            try { new ArgusPairingDialog().showAndWait(); }
             catch(Exception e) { AppServices.showErrorDialog("Argus connection", e.getMessage()); }
         });
         toolsMenu.getItems().add(argusConnections);
