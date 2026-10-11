@@ -409,7 +409,7 @@ public class Hwi {
         }
     }
 
-    public static class DisplayAddressService extends Service<String> {
+    public static class DisplayAddressService extends DeviceDisplayAddressService {
         private final Device device;
         private final String passphrase;
         private final ScriptType scriptType;
@@ -539,7 +539,7 @@ public class Hwi {
         }
     }
 
-    public static class SignPSBTService extends Service<PSBT> {
+    public static class SignPSBTService extends DeviceSigningService {
         private final Device device;
         private final String passphrase;
         private final PSBT psbt;

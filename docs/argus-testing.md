@@ -133,8 +133,10 @@ Java 25 or newer is required. The bundle is `build/jpackage/Sparrow.app`.
 `io/argus/` contains the Sparrow-specific Argus API, paired-device operation
 lock, public pairing registry, keystore conversion and macOS Keychain adapter.
 `control/Argus*` contains only onboarding/PIN UI. The shared device UI asks each
-`Device` for its signing/address service; the USB default remains `Hwi`, while `ArgusDevice` selects its own services and
-`ArgusApi`. `Hwi.signPSBT()` and `Hwi.SignPSBTService` contain no Argus branches
+`Device` for its signing/address service through `DeviceSigningService` and
+`DeviceDisplayAddressService`. The USB default remains `Hwi`; `ArgusDevice`
+selects independent services backed by `ArgusApi`, without inheriting USB tasks.
+Cancellation policy belongs to the service rather than the shared device UI. `Hwi.signPSBT()` and `Hwi.SignPSBTService` contain no Argus branches
 or PIN/progress arguments. Transport, session cryptography and strict PSBT checks
 live in Lark.
 ArgusClient remains beside Lark's other HardwareClient implementations.

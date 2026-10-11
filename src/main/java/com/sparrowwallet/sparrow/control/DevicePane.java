@@ -77,11 +77,11 @@ public class DevicePane extends TitledDescriptionPane {
 
     private boolean defaultDevice;
 
-    private Hwi.SignPSBTService activeSignService;
+    private DeviceSigningService activeSignService;
 
     public void cancelSigning() {
-        if(device.isRemote() && activeSignService != null && activeSignService.isRunning()) {
-            activeSignService.cancel();
+        if(activeSignService != null) {
+            activeSignService.cancelOperation();
         }
     }
 
@@ -884,7 +884,7 @@ public class DevicePane extends TitledDescriptionPane {
                 signButton.setDisable(false);
             }
         } else {
-            Hwi.SignPSBTService signPSBTService = device.createSigningService(passphrase.get(), psbt,
+            DeviceSigningService signPSBTService = device.createSigningService(passphrase.get(), psbt,
                     OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration(), getScene().getWindow());
             activeSignService = signPSBTService;
             signPSBTService.messageProperty().addListener((_, _, value) -> setDescription(value));
@@ -930,7 +930,7 @@ public class DevicePane extends TitledDescriptionPane {
     }
 
     private void displayAddress() {
-        Hwi.DisplayAddressService displayAddressService = device.createDisplayAddressService(passphrase.get(), wallet.getScriptType(), outputDescriptor,
+        DeviceDisplayAddressService displayAddressService = device.createDisplayAddressService(passphrase.get(), wallet.getScriptType(), outputDescriptor,
                 OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration());
         displayAddressService.setOnSucceeded(successEvent -> {
             String address = displayAddressService.getValue();

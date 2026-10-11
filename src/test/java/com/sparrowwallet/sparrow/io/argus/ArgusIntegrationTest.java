@@ -66,6 +66,9 @@ class ArgusIntegrationTest {
                 ArgusDisplayAddressService.class,
                 device.createDisplayAddressService(
                         "", ScriptType.P2WPKH, null, null, "fixture", null));
+        assertFalse(Hwi.SignPSBTService.class.isAssignableFrom(ArgusSigningService.class));
+        assertFalse(
+                Hwi.DisplayAddressService.class.isAssignableFrom(ArgusDisplayAddressService.class));
         Device usb = new Device();
         usb.setModel(WalletModel.LEDGER_NANO_S);
         assertFalse(usb.isRemote());

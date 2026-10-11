@@ -1,34 +1,19 @@
 package com.sparrowwallet.sparrow.io.argus;
 
 import com.sparrowwallet.drongo.OutputDescriptor;
-import com.sparrowwallet.drongo.protocol.ScriptType;
 import com.sparrowwallet.sparrow.io.Device;
+import com.sparrowwallet.sparrow.io.DeviceDisplayAddressService;
 import com.sparrowwallet.sparrow.io.DisplayAddressException;
-import com.sparrowwallet.sparrow.io.Hwi;
 
 import javafx.concurrent.Task;
 
-final class ArgusDisplayAddressService extends Hwi.DisplayAddressService {
+final class ArgusDisplayAddressService extends DeviceDisplayAddressService {
     private final Device device;
     private final String passphrase;
     private final OutputDescriptor descriptor;
 
     ArgusDisplayAddressService(
-            Device device,
-            String passphrase,
-            ScriptType scriptType,
-            OutputDescriptor addressDescriptor,
-            OutputDescriptor walletDescriptor,
-            String walletName,
-            byte[] registration) {
-        super(
-                device,
-                passphrase,
-                scriptType,
-                addressDescriptor,
-                walletDescriptor,
-                walletName,
-                registration);
+            Device device, String passphrase, OutputDescriptor addressDescriptor) {
         this.device = device;
         this.passphrase = passphrase;
         this.descriptor = addressDescriptor;

@@ -5,7 +5,8 @@ import com.sparrowwallet.drongo.protocol.ScriptType;
 import com.sparrowwallet.drongo.psbt.PSBT;
 import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.sparrow.io.Device;
-import com.sparrowwallet.sparrow.io.Hwi;
+import com.sparrowwallet.sparrow.io.DeviceDisplayAddressService;
+import com.sparrowwallet.sparrow.io.DeviceSigningService;
 
 import javafx.stage.Window;
 
@@ -31,32 +32,24 @@ public final class ArgusDevice extends Device {
     }
 
     @Override
-    public Hwi.SignPSBTService createSigningService(
+    public DeviceSigningService createSigningService(
             String passphrase,
             PSBT psbt,
             OutputDescriptor descriptor,
             String walletName,
             byte[] registration,
             Window owner) {
-        return new ArgusSigningService(
-                this, passphrase, psbt, descriptor, walletName, registration, owner);
+        return new ArgusSigningService(this, passphrase, psbt, owner);
     }
 
     @Override
-    public Hwi.DisplayAddressService createDisplayAddressService(
+    public DeviceDisplayAddressService createDisplayAddressService(
             String passphrase,
             ScriptType scriptType,
             OutputDescriptor addressDescriptor,
             OutputDescriptor walletDescriptor,
             String walletName,
             byte[] registration) {
-        return new ArgusDisplayAddressService(
-                this,
-                passphrase,
-                scriptType,
-                addressDescriptor,
-                walletDescriptor,
-                walletName,
-                registration);
+        return new ArgusDisplayAddressService(this, passphrase, addressDescriptor);
     }
 }

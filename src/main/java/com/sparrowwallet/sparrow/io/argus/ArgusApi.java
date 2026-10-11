@@ -1,6 +1,5 @@
 package com.sparrowwallet.sparrow.io.argus;
 
-import com.sparrowwallet.drongo.ExtendedKey;
 import com.sparrowwallet.drongo.OutputDescriptor;
 import com.sparrowwallet.drongo.protocol.Sha256Hash;
 import com.sparrowwallet.drongo.protocol.Transaction;
@@ -16,27 +15,15 @@ import com.sparrowwallet.sparrow.net.ElectrumServer;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/** Sparrow's account, signing and address operations for a paired Argus device. */
+/** Sparrow's signing and address operations for a paired Argus device. */
 public final class ArgusApi {
     private ArgusApi() {}
 
     private static Lark lark(ArgusClient client, String passphrase) {
         Lark lark = new Lark();
         lark.setPassphrase(passphrase);
-        lark.addArgusClient(client);
+        lark.addRemoteClient(client);
         return lark;
-    }
-
-    public static ExtendedKey getXpub(Device device, String passphrase, String derivationPath)
-            throws Exception {
-        return ArgusRegistry.device(device)
-                .execute(
-                        client ->
-                                lark(client, passphrase)
-                                        .getPubKeyAtPath(
-                                                device.getType(),
-                                                device.getPath(),
-                                                derivationPath));
     }
 
     public static String displayAddress(

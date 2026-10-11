@@ -1,6 +1,5 @@
 package com.sparrowwallet.sparrow.wallet;
 
-import com.sparrowwallet.sparrow.io.RemoteDevices;
 import com.google.common.eventbus.Subscribe;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -22,6 +21,8 @@ import com.sparrowwallet.sparrow.event.*;
 import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
 import com.sparrowwallet.sparrow.io.Device;
 import com.sparrowwallet.sparrow.io.Hwi;
+import com.sparrowwallet.sparrow.io.DeviceDisplayAddressService;
+import com.sparrowwallet.sparrow.io.RemoteDevices;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -333,7 +334,7 @@ public class ReceiveController extends WalletFormController implements Initializ
                     dlg.showAndWait();
                 } else {
                     Device actualDevice = possibleDevices.get(0);
-                    Hwi.DisplayAddressService displayAddressService = actualDevice.createDisplayAddressService("", wallet.getScriptType(), addressDescriptor,
+                    DeviceDisplayAddressService displayAddressService = actualDevice.createDisplayAddressService("", wallet.getScriptType(), addressDescriptor,
                             OutputDescriptor.getOutputDescriptor(walletForm.getWallet()), walletForm.getWallet().getFullName(), getDeviceRegistration(actualDevice));
                     displayAddressService.setOnSucceeded(successEvent -> {
                         updateDeviceRegistrations(actualDevice, displayAddressService.getNewDeviceRegistrations());

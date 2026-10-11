@@ -1,11 +1,11 @@
 package com.sparrowwallet.sparrow.io;
 
-import com.sparrowwallet.drongo.protocol.ScriptType;
 import com.sparrowwallet.drongo.OutputDescriptor;
+import com.sparrowwallet.drongo.protocol.ScriptType;
 import com.sparrowwallet.drongo.psbt.PSBT;
-import javafx.stage.Window;
 import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.lark.HardwareClient;
+import javafx.stage.Window;
 
 import java.util.Arrays;
 import java.util.List;
@@ -91,11 +91,11 @@ public class Device {
         return false;
     }
 
-    public Hwi.SignPSBTService createSigningService(String passphrase, PSBT psbt, OutputDescriptor descriptor, String walletName, byte[] registration, Window owner) {
+    public DeviceSigningService createSigningService(String passphrase, PSBT psbt, OutputDescriptor descriptor, String walletName, byte[] registration, Window owner) {
         return new Hwi.SignPSBTService(this, passphrase, psbt, descriptor, walletName, registration);
     }
 
-    public Hwi.DisplayAddressService createDisplayAddressService(String passphrase, ScriptType scriptType, OutputDescriptor addressDescriptor, OutputDescriptor walletDescriptor, String walletName, byte[] registration) {
+    public DeviceDisplayAddressService createDisplayAddressService(String passphrase, ScriptType scriptType, OutputDescriptor addressDescriptor, OutputDescriptor walletDescriptor, String walletName, byte[] registration) {
         return new Hwi.DisplayAddressService(this, passphrase, scriptType, addressDescriptor, walletDescriptor, walletName, registration);
     }
 

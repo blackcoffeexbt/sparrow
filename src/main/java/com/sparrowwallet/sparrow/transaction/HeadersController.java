@@ -1,6 +1,5 @@
 package com.sparrowwallet.sparrow.transaction;
 
-import com.sparrowwallet.sparrow.io.RemoteDevices;
 import com.sparrowwallet.drongo.KeyPurpose;
 import com.sparrowwallet.drongo.SecureString;
 import com.sparrowwallet.drongo.Utils;
@@ -24,6 +23,7 @@ import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
 import com.sparrowwallet.sparrow.glyphfont.FontAwesome5Brands;
 import com.sparrowwallet.sparrow.io.Config;
 import com.sparrowwallet.sparrow.io.Device;
+import com.sparrowwallet.sparrow.io.RemoteDevices;
 import com.sparrowwallet.sparrow.io.bbqr.BBQR;
 import com.sparrowwallet.sparrow.io.bbqr.BBQRType;
 import com.sparrowwallet.sparrow.net.ElectrumServer;

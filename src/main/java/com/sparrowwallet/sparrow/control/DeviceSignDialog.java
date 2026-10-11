@@ -6,12 +6,11 @@ import com.sparrowwallet.drongo.wallet.Wallet;
 import com.sparrowwallet.sparrow.EventManager;
 import com.sparrowwallet.sparrow.event.PSBTSignedEvent;
 import com.sparrowwallet.sparrow.io.Device;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 public class DeviceSignDialog extends DeviceDialog<PSBT> {
     private static final Logger log = LoggerFactory.getLogger(DeviceSignDialog.class);
