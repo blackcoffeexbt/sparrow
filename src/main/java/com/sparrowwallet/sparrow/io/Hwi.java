@@ -67,6 +67,7 @@ public class Hwi {
         List<Device> devices = new ArrayList<>();
         devices.addAll(enumerateUsb(passphrase));
         devices.addAll(enumerateCard());
+        devices.addAll(ArgusRegistry.devices());
         return devices;
     }
 
@@ -165,6 +166,10 @@ public class Hwi {
     }
 
     public Map<WalletType, ExtendedKey> getXpubs(Device device, String passphrase, Map<WalletType, String> accountDerivationPaths, Map<WalletType, ExtendedKey> accountXpubs) throws ImportException {
+        if(device.getModel() == WalletModel.ARGUS) {
+            for(var entry : accountDerivationPaths.entrySet()) accountXpubs.put(entry.getKey(), getXpub(device, passphrase, entry.getValue()));
+            return accountXpubs;
+        }
         deviceLock.lock();
         try {
             for(Map.Entry<WalletType, String> entry : accountDerivationPaths.entrySet()) {
@@ -177,7 +182,16 @@ public class Hwi {
         return accountXpubs;
     }
 
+    private Lark getArgusLark(Device device, String passphrase) {
+        Lark lark = getLark(passphrase);
+        lark.addArgusClient(ArgusRegistry.client(device)); return lark;
+    }
+
     public ExtendedKey getXpub(Device device, String passphrase, String derivationPath) throws ImportException {
+        if(device.getModel() == WalletModel.ARGUS) {
+            try { return getArgusLark(device, passphrase).getPubKeyAtPath(device.getType(), device.getPath(), derivationPath); }
+            catch(Exception e) { throw new ImportException(e.getMessage(), e); }
+        }
         deviceLock.lock();
         try {
             Lark lark = getLark(passphrase);
@@ -217,6 +231,10 @@ public class Hwi {
             throw new IllegalArgumentException("Cannot display address for script type " + scriptType + ": Only addressable types supported");
         }
 
+        if(device.getModel() == WalletModel.ARGUS) {
+            try { return getArgusLark(device, passphrase).displayAddress(device.getType(), device.getPath(), addressDescriptor); }
+            catch(Exception e) { throw new DisplayAddressException(e.getMessage(), e); }
+        }
         deviceLock.lock();
         try {
             Lark lark = getLark(passphrase, walletDescriptor, walletName, walletRegistration);
@@ -251,6 +269,31 @@ public class Hwi {
 
     public PSBT signPSBT(Device device, String passphrase, PSBT psbt,
                          OutputDescriptor walletDescriptor, String walletName, byte[] walletRegistration) throws SignTransactionException {
+        return signPSBT(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration, progress -> {});
+    }
+
+    private PSBT signPSBT(Device device, String passphrase, PSBT psbt,
+                         OutputDescriptor walletDescriptor, String walletName, byte[] walletRegistration,
+                         java.util.function.Consumer<com.sparrowwallet.lark.argus.ArgusProgress> progress) throws SignTransactionException {
+        if(device.getModel() == WalletModel.ARGUS) {
+            com.sparrowwallet.lark.ArgusClient client;
+            try { client = ArgusRegistry.client(device); }
+            catch(Exception e) { throw new SignTransactionException(e.getMessage(), e); }
+            var connection = client.getConnection();
+            connection.setProgressListener(progress); connection.setPinProvider(new com.sparrowwallet.sparrow.control.ArgusPinDialog());
+            client.setPreviousTransactions(txid -> {
+                if(!AppServices.isConnected()) return null;
+                try {
+                    var previous = new com.sparrowwallet.sparrow.net.ElectrumServer().getReferencedTransactions(Set.of(txid), null).get(txid);
+                    return previous == null ? null : previous.getTransaction();
+                } catch(Exception e) { throw new IllegalStateException("Cannot retrieve the full previous transaction", e); }
+            });
+            try {
+                Lark lark = getLark(passphrase); lark.addArgusClient(client);
+                return lark.signTransaction(device.getType(), device.getPath(), psbt);
+            } catch(Exception e) { throw new SignTransactionException(e.getMessage(), e); }
+            finally { connection.setPinProvider(null); connection.setProgressListener(p -> {}); }
+        }
         deviceLock.lock();
         try {
             Lark lark = getLark(passphrase, walletDescriptor, walletName, walletRegistration);
@@ -565,7 +608,7 @@ public class Hwi {
             return new Task<>() {
                 protected PSBT call() throws SignTransactionException {
                     Hwi hwi = new Hwi();
-                    PSBT signed = hwi.signPSBT(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration);
+                    PSBT signed = hwi.signPSBT(device, passphrase, psbt, walletDescriptor, walletName, walletRegistration, p -> updateMessage(p.status() + (p.reason().isEmpty() ? "" : " — " + p.reason())));
                     newDeviceRegistrations.addAll(hwi.newDeviceRegistrations);
                     return signed;
                 }

@@ -22,7 +22,7 @@ public class SparrowWallet {
     public static final String APP_ID = "sparrow";
     public static final String APP_NAME = "Sparrow";
     public static final String APP_VERSION = "2.5.6";
-    public static final String APP_VERSION_SUFFIX = "";
+    public static final String APP_VERSION_SUFFIX = " Argus test";
     public static final String APP_HOME_PROPERTY = ApplicationDir.getHomeProperty(APP_NAME);
     public static final String NETWORK_ENV_PROPERTY = "SPARROW_NETWORK";
     public static final String JPACKAGE_APP_PATH = "jpackage.app-path";

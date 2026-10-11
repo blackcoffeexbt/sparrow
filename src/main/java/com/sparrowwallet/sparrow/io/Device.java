@@ -99,7 +99,7 @@ public class Device {
     }
 
     public boolean supportsScriptType(ScriptType scriptType) {
-        return supportedScriptTypes == null || supportedScriptTypes.contains(scriptType);
+        return model == WalletModel.ARGUS ? scriptType == ScriptType.P2WPKH : supportedScriptTypes == null || supportedScriptTypes.contains(scriptType);
     }
 
     public String getError() {

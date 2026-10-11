@@ -16,6 +16,7 @@ public class DeviceSignDialog extends DeviceDialog<PSBT> {
 
     private final Wallet wallet;
     private final PSBT psbt;
+    private final java.util.List<DevicePane> panes = new java.util.ArrayList<>();
 
     public DeviceSignDialog(Wallet wallet, List<String> operationFingerprints, PSBT psbt) {
         super(operationFingerprints);
@@ -24,13 +25,14 @@ public class DeviceSignDialog extends DeviceDialog<PSBT> {
         EventManager.get().register(this);
         setOnCloseRequest(event -> {
             EventManager.get().unregister(this);
+            panes.forEach(DevicePane::cancelArgusSigning);
         });
         setResultConverter(dialogButton -> dialogButton.getButtonData().isCancelButton() ? null : psbt);
     }
 
     @Override
     protected DevicePane getDevicePane(Device device, boolean defaultDevice) {
-        return new DevicePane(wallet, psbt, device, defaultDevice);
+        DevicePane pane = new DevicePane(wallet, psbt, device, defaultDevice); panes.add(pane); return pane;
     }
 
     @Subscribe

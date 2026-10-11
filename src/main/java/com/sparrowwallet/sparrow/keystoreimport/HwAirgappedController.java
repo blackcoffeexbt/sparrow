@@ -2,6 +2,8 @@ package com.sparrowwallet.sparrow.keystoreimport;
 
 import com.sparrowwallet.drongo.policy.PolicyType;
 import com.sparrowwallet.sparrow.control.CardImportPane;
+import com.sparrowwallet.sparrow.control.ArgusImportPane;
+import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.sparrow.control.FileKeystoreImportPane;
 import com.sparrowwallet.sparrow.control.TitledDescriptionPane;
 import com.sparrowwallet.sparrow.io.*;
@@ -39,6 +41,11 @@ public class HwAirgappedController extends KeystoreImportDetailController {
                     importAccordion.getPanes().add(importPane);
                 }
             }
+        }
+
+        if(ArgusKeystore.supports(getMasterController().getWallet()) &&
+                (getMasterController().getRequiredModel() == null || getMasterController().getRequiredModel() == WalletModel.ARGUS)) {
+            importAccordion.getPanes().add(new ArgusImportPane(getMasterController().getWallet(), getMasterController().getRequiredDerivation()));
         }
 
         List<KeystoreCardImport> cardImporters = List.of(new Tapsigner(), new Satochip(), new Satschip(), new Keycard());

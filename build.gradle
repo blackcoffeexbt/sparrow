@@ -45,6 +45,7 @@ dependencies {
     //Any changes to the dependencies must be reflected in the module definitions below!
     implementation(project(':drongo'))
     implementation(project(':lark'))
+    implementation('net.java.dev.jna:jna:5.18.1')
     implementation('com.google.guava:guava:33.5.0-jre')
     implementation('com.google.code.gson:gson:2.13.2')
     implementation('com.h2database:h2:2.1.214')
@@ -154,7 +155,7 @@ application {
     mainModule = 'com.sparrowwallet.sparrow'
     mainClass = 'com.sparrowwallet.sparrow.SparrowWallet'
 
-    applicationDefaultJvmArgs = ["-XX:+HeapDumpOnOutOfMemoryError",
+    applicationDefaultJvmArgs = ["-XX:-HeapDumpOnOutOfMemoryError",
                                  "--enable-native-access=com.sparrowwallet.drongo",
                                  "--enable-native-access=com.sun.jna",
                                  "--enable-native-access=javafx.graphics",

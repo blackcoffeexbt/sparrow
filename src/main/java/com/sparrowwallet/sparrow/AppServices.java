@@ -266,6 +266,7 @@ public class AppServices {
     }
 
     public void stop() {
+        com.sparrowwallet.sparrow.io.ArgusRegistry.close();
         if(connectionService != null) {
             connectionService.cancel();
         }
@@ -1475,7 +1476,7 @@ public class AppServices {
             Wallet wallet = walletTabData.getWallet();
             Storage storage = walletTabData.getStorage();
 
-            if(Interface.get() == Interface.DESKTOP && (!storage.getWalletFile().exists() || wallet.containsSource(KeystoreSource.HW_USB) || CardApi.isReaderAvailable())) {
+            if(Interface.get() == Interface.DESKTOP && (!storage.getWalletFile().exists() || wallet.containsSource(KeystoreSource.HW_USB) || wallet.getKeystores().stream().anyMatch(ks -> ks.getWalletModel() == WalletModel.ARGUS) || CardApi.isReaderAvailable())) {
                 usbWallet = true;
 
                 if(deviceEnumerateService == null) {

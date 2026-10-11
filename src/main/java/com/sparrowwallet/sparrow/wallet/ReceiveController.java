@@ -14,6 +14,7 @@ import com.sparrowwallet.drongo.wallet.BlockTransactionHashIndex;
 import com.sparrowwallet.drongo.wallet.Keystore;
 import com.sparrowwallet.drongo.wallet.KeystoreSource;
 import com.sparrowwallet.drongo.wallet.Wallet;
+import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.sparrow.AppServices;
 import com.sparrowwallet.sparrow.EventManager;
 import com.sparrowwallet.sparrow.control.*;
@@ -241,7 +242,7 @@ public class ReceiveController extends WalletFormController implements Initializ
 
             displayAddress.setUserData(addressDevices);
             return;
-        } else if(currentEntry != null && wallet.getKeystores().stream().anyMatch(keystore -> keystore.getSource().equals(KeystoreSource.HW_USB) || keystore.getSource().equals(KeystoreSource.SW_WATCH))) {
+        } else if(currentEntry != null && wallet.getKeystores().stream().anyMatch(keystore -> keystore.getSource().equals(KeystoreSource.HW_USB) || keystore.getWalletModel() == WalletModel.ARGUS || keystore.getSource().equals(KeystoreSource.SW_WATCH))) {
             displayAddress.setVisible(true);
             displayAddress.setUserData(null);
             return;

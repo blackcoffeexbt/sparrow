@@ -30,13 +30,14 @@ public class HwUsbScanController extends KeystoreImportDetailController {
 
         Hwi.EnumerateService enumerateService = new Hwi.EnumerateService(null);
         enumerateService.setOnSucceeded(workerStateEvent -> {
-            List<Device> devices = enumerateService.getValue();
+            List<Device> allDevices = enumerateService.getValue();
+            List<Device> devices = allDevices.stream().filter(d -> d.getModel() != com.sparrowwallet.drongo.wallet.WalletModel.ARGUS).toList();
             if(devices.isEmpty()) {
                 getMasterController().showUsbNone();
             } else {
                 getMasterController().showUsbDevices(devices);
             }
-            Platform.runLater(() -> EventManager.get().post(new UsbDeviceEvent(devices)));
+            Platform.runLater(() -> EventManager.get().post(new UsbDeviceEvent(allDevices)));
         });
         enumerateService.setOnFailed(workerStateEvent -> {
             getMasterController().showUsbError(enumerateService.getException().getMessage());

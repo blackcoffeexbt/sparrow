@@ -410,6 +410,14 @@ public class AppController implements Initializable {
         preventSleepProperty.set(Config.get().isPreventSleep());
         preventSleep.selectedProperty().bindBidirectional(preventSleepProperty);
 
+        MenuItem argusConnections = new MenuItem("Argus connections…");
+        argusConnections.setDisable(Network.get() != Network.MAINNET && Network.get() != Network.TESTNET4);
+        argusConnections.setOnAction(event -> {
+            try { new com.sparrowwallet.sparrow.control.ArgusPairingDialog().showAndWait(); }
+            catch(Exception e) { AppServices.showErrorDialog("Argus connection", e.getMessage()); }
+        });
+        toolsMenu.getItems().add(argusConnections);
+
         MenuItem homeItem = new MenuItem("Home Folder...");
         homeItem.setOnAction(this::restartInHome);
         restart.getItems().add(homeItem);

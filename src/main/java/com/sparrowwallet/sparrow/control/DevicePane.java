@@ -76,6 +76,12 @@ public class DevicePane extends TitledDescriptionPane {
     private final StringProperty messageProperty = new SimpleStringProperty("");
 
     private boolean defaultDevice;
+    private Hwi.SignPSBTService activeSignService;
+    public void cancelArgusSigning() {
+        if(device.getModel() == WalletModel.ARGUS && activeSignService != null && activeSignService.isRunning()) {
+            activeSignService.cancel(); com.sparrowwallet.sparrow.io.ArgusRegistry.cancelSigning(device.getPath());
+        }
+    }
 
     public DevicePane(Wallet wallet, Device device, boolean defaultDevice, KeyDerivation defaultDerivation, KeyDerivation requiredDerivation) {
         super(device.getModel().toDisplayString(), "", "", device.getModel());
@@ -340,10 +346,11 @@ public class DevicePane extends TitledDescriptionPane {
                 MenuItem discoverItem = new MenuItem("Discover Wallet...");
                 discoverItem.setDisable(!AppServices.isConnected());
                 discoverItem.setOnAction(_ -> discoverWallet());
+                discoverItem.setDisable(discoverItem.isDisable() || device.getModel() == WalletModel.ARGUS);
                 importMenuButton.getItems().add(discoverItem);
             } else {
                 String[] accounts = new String[] {"Default Account #0", "Account #1", "Account #2", "Account #3", "Account #4", "Account #5", "Account #6", "Account #7", "Account #8", "Account #9"};
-                int scriptAccountsLength = ScriptType.P2SH.equals(wallet.getScriptType()) ? 1 : accounts.length;
+                int scriptAccountsLength = device.getModel() == WalletModel.ARGUS || ScriptType.P2SH.equals(wallet.getScriptType()) ? 1 : accounts.length;
                 for(int i = 0; i < scriptAccountsLength; i++) {
                     MenuItem item = new MenuItem(accounts[i]);
                     final List<ChildNumber> derivation = wallet.getScriptType().getDefaultDerivation(i);
@@ -726,6 +733,9 @@ public class DevicePane extends TitledDescriptionPane {
     }
 
     private void importKeystore(List<ChildNumber> derivation) {
+        if(device.getModel() == WalletModel.ARGUS && wallet.getPolicyType() != PolicyType.SINGLE_HD) {
+            setError("Unsupported wallet", "Argus supports the single native SegWit account only."); importButton.setDisable(false); return;
+        }
         if(device.isCard()) {
             try {
                 CardApi cardApi = CardApi.getCardApi(device.getModel(), pin.get());
@@ -878,6 +888,8 @@ public class DevicePane extends TitledDescriptionPane {
         } else {
             Hwi.SignPSBTService signPSBTService = new Hwi.SignPSBTService(device, passphrase.get(), psbt,
                     OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration());
+            activeSignService = signPSBTService;
+            signPSBTService.messageProperty().addListener((_, _, value) -> setDescription(value));
             signPSBTService.setOnSucceeded(workerStateEvent -> {
                 PSBT signedPsbt = signPSBTService.getValue();
                 EventManager.get().post(new PSBTSignedEvent(psbt, signedPsbt));
