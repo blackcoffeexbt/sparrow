@@ -34,7 +34,7 @@ public final class ArgusPinDialog implements ArgusPinProvider {
         CompletableFuture<char[]> future = new CompletableFuture<>();
         Platform.runLater(
                 () -> {
-                    if(token != generation.get()) {
+                    if(token != generation.get() || (owner != null && !owner.isShowing())) {
                         future.complete(null);
                         return;
                     }

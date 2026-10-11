@@ -30,14 +30,13 @@ public class HwUsbScanController extends KeystoreImportDetailController {
 
         Hwi.EnumerateService enumerateService = new Hwi.EnumerateService(null);
         enumerateService.setOnSucceeded(workerStateEvent -> {
-            List<Device> allDevices = enumerateService.getValue();
-            List<Device> devices = allDevices.stream().filter(device -> !device.isRemote()).toList();
+            List<Device> devices = enumerateService.getValue();
             if(devices.isEmpty()) {
                 getMasterController().showUsbNone();
             } else {
                 getMasterController().showUsbDevices(devices);
             }
-            Platform.runLater(() -> EventManager.get().post(new UsbDeviceEvent(allDevices)));
+            Platform.runLater(() -> EventManager.get().post(new UsbDeviceEvent(devices)));
         });
         enumerateService.setOnFailed(workerStateEvent -> {
             getMasterController().showUsbError(enumerateService.getException().getMessage());

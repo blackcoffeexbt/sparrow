@@ -122,29 +122,38 @@ Keep all repositories independent; no local repositories are nested or added as
 submodules. Upstream's dependency gitlinks are unchanged. Supply their paths:
 
 ```sh
-./gradlew -PdrongoDir=../drongo -PlarkDir=../lark :test
+./gradlew -PdrongoDir=../drongo -PlarkDir=../lark :lark:test :test
+./gradlew -PdrongoDir=../drongo -PlarkDir=../lark verifyArgusUi
 ./gradlew -PdrongoDir=../drongo -PlarkDir=../lark jpackageImage
 ```
 
 Java 25 or newer is required. The bundle is `build/jpackage/Sparrow.app`.
+`verifyArgusUi` requires a desktop session and uses synthetic windows only. It
+runs in its own test process because starting/stopping JavaFX changes the behavior
+of unrelated tests that deliberately run without a toolkit. It checks PIN window
+ownership, modality, inherited always-on-top, clearing/cancellation, delayed UI
+dispatch, and cancellation of only the worker belonging to a hidden owner.
 
 ## Code structure and review boundaries
 
 `io/argus/` contains the Sparrow-specific Argus API, paired-device operation
 lock, public pairing registry, keystore conversion and macOS Keychain adapter.
 `control/Argus*` contains only onboarding/PIN UI. The shared device UI asks each
-`Device` for its signing/address service through `DeviceSigningService` and
-`DeviceDisplayAddressService`. The USB default remains `Hwi`; `ArgusDevice`
+`Device` for its signing/address service through `DeviceService<T>`, JavaFX's
+typed service with optional wallet-registration results. The USB default remains `Hwi`; `ArgusDevice`
 selects independent services backed by `ArgusApi`, without inheriting USB tasks.
 Cancellation policy belongs to the service rather than the shared device UI. `Hwi.signPSBT()` and `Hwi.SignPSBTService` contain no Argus branches
 or PIN/progress arguments. Transport, session cryptography and strict PSBT checks
 live in Lark.
 ArgusClient remains beside Lark's other HardwareClient implementations.
 
-The paired-device lock covers callbacks, previous-transaction lookup, account
+The paired-device gate covers callbacks, previous-transaction lookup, account
 refresh and signing together. Competing operations fail before replacing an
-active request's PIN/progress callbacks. Closing a signing dialog interrupts only
-its own worker; it cannot cancel another window's request. The PIN dialog is owned
+active request's PIN/progress callbacks, including nested calls on the same
+thread. `ArgusSigningService` observes its owner's hidden event from scheduling
+until its terminal state, then removes the listener and closes its PIN prompt.
+Closing or hiding the signing window interrupts only its own worker; it cannot
+cancel another window's request. The PIN dialog is owned
 by that signing window, is window-modal, and inherits its always-on-top setting.
 
 Drongo's `WalletModel.ARGUS` addition is a prerequisite for the Lark and Sparrow
@@ -166,3 +175,77 @@ The Argus provider is registered in the module descriptor and in META-INF/servic
 for classpath builds. BitBox, Ledger and Coldcard retain their existing Lark/HWI
 paths unchanged. Argus has no top-level Tools menu; its connection management
 belongs to the Argus keystore import entry.
+
+## Upstream diff review
+
+The review covers the full feature branches against `origin/master`, including
+the architecture-cleanup commits `b6c6dd84` (Sparrow) and `3072d53` (Lark), and
+their working trees. The starting trees were clean. Drongo's only feature change
+is the `ARGUS` model; no further model or firmware change is required.
+
+BitBox supplies its own pairing/Noise configuration; Ledger keeps registration
+results in the HWI services; Coldcard separates file import from USB operations;
+Satochip supplies card-specific import, operations and PIN handling. These patterns
+support keeping Argus onboarding and transport lifecycle together, with small
+dispatch hooks instead of extending HWI's USB lock or introducing a general
+connection/credential framework.
+
+Saved remote pairings are combined with the local device snapshot when needed.
+They do not start USB polling, wait for a USB scan, or enter `UsbDeviceEvent`.
+USB/card scans and their events remain local; Argus pairing changes publish the
+small `RemoteDevicesChangedEvent` notification. The receive view updates from
+both sources, and a failed local scan cannot remove saved remote devices from a
+device dialog. Public pairing-file reads no longer wait on the registry's
+connection monitor while a background worker is waiting for macOS Keychain.
+The file is bounded and replaced atomically; discovery reads no credentials and
+opens no relays.
+
+Remaining shared integration points and their purpose:
+
+| Shared location | Why it remains |
+| --- | --- |
+| `RemoteDeviceProvider`, `RemoteDevices`, module/classpath registration | The small existing provider boundary supplies onboarding, public device discovery, model availability and shutdown. It owns no protocol, credential or operation state. |
+| `AppServices.getDevices()` / `stop()` | Combine local snapshots with saved pairings and close provider-owned connections on application shutdown. USB polling logic matches upstream. |
+| `Device` factories and `DeviceService<T>` | Dispatch signing/address verification while retaining Ledger registration results and the existing HWI defaults. The signing factory passes the actual owning window. |
+| `Hwi` service base types | Implement the shared result contract. Its enumeration, USB/card locking and task bodies match upstream. |
+| `DevicePane` | Select the device's services and display their JavaFX message property. Argus formats progress and handles PIN/cancellation in its own service. |
+| `DeviceDialog` | Keep paired devices available when a user rescans local hardware, including scan failures. |
+| `HeadersController` | Enable signing for remotely operable airgapped keystores and use a wireless icon for those devices. |
+| `ReceiveController` and `RemoteDevicesChangedEvent` | Enable address verification, select the device service and refresh availability independently of USB scans. |
+| `HwAirgappedController` | Add provider-owned import panes to the existing keystore onboarding list. |
+| Build/module settings and resources | Declare direct Keychain/JNA usage, disable credential-bearing heap dumps, support independent development checkouts, register the provider, and provide model icons. The desktop test task is isolated from ordinary regression tests. |
+
+`HwUsbScanController` and `DeviceSignDialog` now match upstream completely.
+`Device.isRemote()`, shared `cancelOperation()`, and signing-dialog pane tracking
+are removed. With cancellation device-specific, `DeviceSigningService` and
+`DeviceDisplayAddressService` were identical apart from their result type; they
+are collapsed into the 13-line `DeviceService<T>`. No generic operation manager,
+cancellation framework or transport-aware UI was added.
+
+In Lark, `Interface.REMOTE` and `RemoteHardwareClient` identify host-registered
+clients. `addRemoteClient()` borrows a connection and routes operations outside
+the local hardware lock. Argus account, passphrase, PIN and PSBT validation remain
+inside the Argus client/protocol implementation. The extra `HardwareType`
+transport getter was removed in favor of its existing `uses()` method.
+
+Validation on 2026-10-11, using `JAVA_HOME=/tmp/argus-jdk/Contents/Home` and
+`GRADLE_USER_HOME=/tmp/argus-gradle`:
+
+- `:lark:test :test`: 46 Lark and 334 Sparrow tests, zero failures or skips.
+- `verifyArgusUi`: four desktop lifecycle tests, zero failures or skips.
+- Classpath service discovery is covered by `ArgusIntegrationTest`; the public
+  registry regression also exercises the provider through `RemoteDevices`.
+- A fresh isolated `jlink` image discovers exactly one Argus provider and
+  initializes the module's `RemoteDevices` consumer successfully. The smoke
+  check uses the image's modules with a Java launcher from the same JDK (the
+  normal packaging configuration strips native launchers). The image contains
+  only `DeviceService`, with neither of the superseded service base classes.
+- Full upstream diffs and whitespace checks were reviewed again; dependency
+  gitlinks are unchanged. Drongo and firmware needed no new changes.
+
+These are synthetic protocol, regression and desktop lifecycle checks. They do
+not validate a physical Argus, USB/card hardware, real relay behavior or Keychain
+approval/reconnect behavior. No real credentials were read, hardware flashed,
+storage erased, transactions broadcast, builds published or branches pushed.
+The acceptance checklist above still applies. Cancelling a host worker stops
+waiting; it does not revoke a signing request already delivered to Argus.

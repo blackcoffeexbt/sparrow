@@ -130,9 +130,21 @@ test {
     useJUnitPlatform {
         //Checkpoint verification needs the network and checks compiled in data rather than code, so it is a release checklist step
         excludeTags 'checkpoint'
+        //Desktop lifecycle checks need their own JavaFX toolkit and test process.
+        excludeTags 'argus-ui'
     }
     jvmArgs = ["--enable-native-access=ALL-UNNAMED"]
     systemProperty 'sparrow.home', layout.buildDirectory.dir('test-home').get().asFile.absolutePath
+}
+
+tasks.register('verifyArgusUi', Test) {
+    description = 'Verifies Argus PIN ownership and signing-window cancellation on a desktop'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'argus-ui' }
+    jvmArgs = ["--enable-native-access=ALL-UNNAMED"]
+    systemProperty 'sparrow.home', layout.buildDirectory.dir('argus-ui-test-home').get().asFile.absolutePath
 }
 
 tasks.register('verifyCheckpoint', Test) {

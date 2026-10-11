@@ -6,6 +6,7 @@ import com.sparrowwallet.sparrow.event.UsbDeviceEvent;
 import com.sparrowwallet.sparrow.glyphfont.FontAwesome5Brands;
 import com.sparrowwallet.sparrow.io.Device;
 import com.sparrowwallet.sparrow.io.Hwi;
+import com.sparrowwallet.sparrow.io.RemoteDevices;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -106,15 +107,15 @@ public abstract class DeviceDialog<R> extends Dialog<R> {
         enumerateService.setOnSucceeded(workerStateEvent -> {
             scanButton.setText("Scan...");
             List<Device> devices = enumerateService.getValue();
-            setDevices(devices);
+            setDevices(RemoteDevices.withLocalDevices(devices));
             Platform.runLater(() -> EventManager.get().post(new UsbDeviceEvent(devices)));
         });
         enumerateService.setOnFailed(workerStateEvent -> {
             scanButton.setText("Scan...");
-            deviceAccordion.getPanes().clear();
-            scanButton.setDefaultButton(true);
-            scanBox.setVisible(true);
-            scanLabel.setText(workerStateEvent.getSource().getException().getMessage());
+            setDevices(RemoteDevices.enumerate());
+            if(scanBox.isVisible()) {
+                scanLabel.setText(workerStateEvent.getSource().getException().getMessage());
+            }
         });
         enumerateService.setOnRunning(workerStateEvent -> {
             scanButton.setText("Scanning...");

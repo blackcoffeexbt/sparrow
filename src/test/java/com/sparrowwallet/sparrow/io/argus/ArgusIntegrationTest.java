@@ -57,7 +57,6 @@ class ArgusIntegrationTest {
         assertEquals(record, mapper.readValue(encoded, ArgusRegistry.Pairing.class));
         Device device = new ArgusDevice(record);
         assertTrue(device.supportsScriptType(ScriptType.P2WPKH));
-        assertTrue(device.isRemote());
         PSBT psbt = new PSBT(Base64.getDecoder().decode(fixture.path("unsigned").asText()));
         assertInstanceOf(
                 ArgusSigningService.class,
@@ -71,7 +70,6 @@ class ArgusIntegrationTest {
                 Hwi.DisplayAddressService.class.isAssignableFrom(ArgusDisplayAddressService.class));
         Device usb = new Device();
         usb.setModel(WalletModel.LEDGER_NANO_S);
-        assertFalse(usb.isRemote());
         assertEquals(
                 Hwi.SignPSBTService.class,
                 usb.createSigningService("", psbt, null, "fixture", null, null).getClass());

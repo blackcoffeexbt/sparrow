@@ -9,6 +9,7 @@ import com.sparrowwallet.sparrow.control.TitledDescriptionPane;
 import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
+import java.util.stream.Stream;
 
 /** Common remote-device hooks; providers own protocol, credentials and UI. */
 public final class RemoteDevices {
@@ -24,6 +25,11 @@ public final class RemoteDevices {
                 .filter(RemoteDeviceProvider::isAvailable)
                 .flatMap(provider -> provider.enumerate().stream())
                 .toList();
+    }
+
+    /** Combine saved remote pairings with a USB/card snapshot without scanning hardware. */
+    public static List<Device> withLocalDevices(List<Device> localDevices) {
+        return Stream.concat(localDevices.stream(), enumerate().stream()).toList();
     }
 
     public static boolean supports(Keystore keystore) {

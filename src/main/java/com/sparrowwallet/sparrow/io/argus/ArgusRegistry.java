@@ -16,7 +16,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /** Network/profile-scoped public pins, with independent identities in macOS Keychain. */
 public final class ArgusRegistry {
@@ -55,7 +54,8 @@ public final class ArgusRegistry {
                     .enable(
                             com.fasterxml.jackson.core.JsonParser.Feature
                                     .STRICT_DUPLICATE_DETECTION);
-    private static final Map<String, ArgusConnectionHandle> clients = new ConcurrentHashMap<>();
+    // All connection mutations are serialized by the registry monitor.
+    private static final Map<String, ArgusConnectionHandle> clients = new HashMap<>();
 
     private ArgusRegistry() {}
 
@@ -71,7 +71,9 @@ public final class ArgusRegistry {
         return Storage.getDataDir().toPath().resolve("argus.json");
     }
 
-    public static synchronized List<Pairing> pairings() {
+    // The public file is replaced atomically. Reading it must not wait for a
+    // worker holding the registry monitor while macOS asks to unlock Keychain.
+    public static List<Pairing> pairings() {
         if(Network.get() != Network.MAINNET && Network.get() != Network.TESTNET4) return List.of();
         return loadPairings(file(), network());
     }

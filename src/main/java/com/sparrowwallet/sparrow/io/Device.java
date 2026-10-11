@@ -87,15 +87,11 @@ public class Device {
         this.card = card;
     }
 
-    public boolean isRemote() {
-        return false;
-    }
-
-    public DeviceSigningService createSigningService(String passphrase, PSBT psbt, OutputDescriptor descriptor, String walletName, byte[] registration, Window owner) {
+    public DeviceService<PSBT> createSigningService(String passphrase, PSBT psbt, OutputDescriptor descriptor, String walletName, byte[] registration, Window owner) {
         return new Hwi.SignPSBTService(this, passphrase, psbt, descriptor, walletName, registration);
     }
 
-    public DeviceDisplayAddressService createDisplayAddressService(String passphrase, ScriptType scriptType, OutputDescriptor addressDescriptor, OutputDescriptor walletDescriptor, String walletName, byte[] registration) {
+    public DeviceService<String> createDisplayAddressService(String passphrase, ScriptType scriptType, OutputDescriptor addressDescriptor, OutputDescriptor walletDescriptor, String walletName, byte[] registration) {
         return new Hwi.DisplayAddressService(this, passphrase, scriptType, addressDescriptor, walletDescriptor, walletName, registration);
     }
 

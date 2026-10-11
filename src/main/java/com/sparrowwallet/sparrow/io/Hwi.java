@@ -67,7 +67,6 @@ public class Hwi {
         List<Device> devices = new ArrayList<>();
         devices.addAll(enumerateUsb(passphrase));
         devices.addAll(enumerateCard());
-        devices.addAll(RemoteDevices.enumerate());
         return devices;
     }
 
@@ -409,7 +408,7 @@ public class Hwi {
         }
     }
 
-    public static class DisplayAddressService extends DeviceDisplayAddressService {
+    public static class DisplayAddressService extends DeviceService<String> {
         private final Device device;
         private final String passphrase;
         private final ScriptType scriptType;
@@ -539,7 +538,7 @@ public class Hwi {
         }
     }
 
-    public static class SignPSBTService extends DeviceSigningService {
+    public static class SignPSBTService extends DeviceService<PSBT> {
         private final Device device;
         private final String passphrase;
         private final PSBT psbt;

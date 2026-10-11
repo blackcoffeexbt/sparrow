@@ -884,7 +884,7 @@ public class AppServices {
     }
 
     public static List<Device> getDevices() {
-        return devices == null ? new ArrayList<>() : devices;
+        return RemoteDevices.withLocalDevices(devices == null ? Collections.emptyList() : devices);
     }
 
     public static BitcoinURI getPayjoinURI(PSBT psbt) {
@@ -1476,7 +1476,7 @@ public class AppServices {
             Wallet wallet = walletTabData.getWallet();
             Storage storage = walletTabData.getStorage();
 
-            if(Interface.get() == Interface.DESKTOP && (!storage.getWalletFile().exists() || wallet.containsSource(KeystoreSource.HW_USB) || wallet.getKeystores().stream().anyMatch(RemoteDevices::supports) || CardApi.isReaderAvailable())) {
+            if(Interface.get() == Interface.DESKTOP && (!storage.getWalletFile().exists() || wallet.containsSource(KeystoreSource.HW_USB) || CardApi.isReaderAvailable())) {
                 usbWallet = true;
 
                 if(deviceEnumerateService == null) {

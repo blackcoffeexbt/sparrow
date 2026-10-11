@@ -5,8 +5,8 @@ import javafx.concurrent.Service;
 import java.util.Collections;
 import java.util.Set;
 
-/** Common address-verification result contract, independent of transport. */
-public abstract class DeviceDisplayAddressService extends Service<String> {
+/** A device operation's result and optional wallet registrations, independent of transport. */
+public abstract class DeviceService<T> extends Service<T> {
     public Set<byte[]> getNewDeviceRegistrations() {
         return Collections.emptySet();
     }

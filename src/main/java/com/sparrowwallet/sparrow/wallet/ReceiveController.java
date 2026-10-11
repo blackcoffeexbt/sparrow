@@ -20,8 +20,7 @@ import com.sparrowwallet.sparrow.control.*;
 import com.sparrowwallet.sparrow.event.*;
 import com.sparrowwallet.sparrow.glyphfont.FontAwesome5;
 import com.sparrowwallet.sparrow.io.Device;
-import com.sparrowwallet.sparrow.io.Hwi;
-import com.sparrowwallet.sparrow.io.DeviceDisplayAddressService;
+import com.sparrowwallet.sparrow.io.DeviceService;
 import com.sparrowwallet.sparrow.io.RemoteDevices;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -334,7 +333,7 @@ public class ReceiveController extends WalletFormController implements Initializ
                     dlg.showAndWait();
                 } else {
                     Device actualDevice = possibleDevices.get(0);
-                    DeviceDisplayAddressService displayAddressService = actualDevice.createDisplayAddressService("", wallet.getScriptType(), addressDescriptor,
+                    DeviceService<String> displayAddressService = actualDevice.createDisplayAddressService("", wallet.getScriptType(), addressDescriptor,
                             OutputDescriptor.getOutputDescriptor(walletForm.getWallet()), walletForm.getWallet().getFullName(), getDeviceRegistration(actualDevice));
                     displayAddressService.setOnSucceeded(successEvent -> {
                         updateDeviceRegistrations(actualDevice, displayAddressService.getNewDeviceRegistrations());
@@ -447,7 +446,12 @@ public class ReceiveController extends WalletFormController implements Initializ
 
     @Subscribe
     public void usbDevicesFound(UsbDeviceEvent event) {
-        updateDisplayAddress(event.getDevices());
+        updateDisplayAddress(RemoteDevices.withLocalDevices(event.getDevices()));
+    }
+
+    @Subscribe
+    public void remoteDevicesChanged(RemoteDevicesChangedEvent event) {
+        updateDisplayAddress(AppServices.getDevices());
     }
 
     @Subscribe

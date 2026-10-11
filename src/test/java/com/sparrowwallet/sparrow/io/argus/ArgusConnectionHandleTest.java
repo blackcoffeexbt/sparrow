@@ -98,6 +98,20 @@ class ArgusConnectionHandleTest {
     }
 
     @Test
+    void rejectsReentrantOperationsBeforeTheyCanReplaceCallbacks() throws Exception {
+        try(var device = device()) {
+            assertEquals("outer result", device.execute(client -> {
+                assertThrows(DeviceException.class, () -> device.execute(nested -> {
+                    fail("Nested work must not replace the active request's callbacks");
+                    return null;
+                }));
+                return "outer result";
+            }));
+            assertEquals("next result", device.execute(client -> "next result"));
+        }
+    }
+
+    @Test
     void failureReleasesOperationAndClosedDeviceRejectsFurtherWork() throws Exception {
         try (var device = device()) {
             assertThrows(

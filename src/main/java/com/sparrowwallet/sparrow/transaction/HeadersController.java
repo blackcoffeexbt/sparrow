@@ -1008,19 +1008,21 @@ public class HeadersController extends TransactionFormController implements Init
 
     private void initializeSignButton(Wallet signingWallet) {
         Optional<Keystore> softwareKeystore = signingWallet.getKeystores().stream().filter(keystore -> keystore.getSource().equals(KeystoreSource.SW_SEED)).findAny();
-        Optional<Keystore> usbKeystore = signingWallet.getKeystores().stream().filter(keystore -> keystore.getSource().equals(KeystoreSource.HW_USB) || RemoteDevices.supports(keystore) || keystore.getSource().equals(KeystoreSource.SW_WATCH)).findAny();
+        Optional<Keystore> deviceKeystore = signingWallet.getKeystores().stream().filter(keystore -> keystore.getSource().equals(KeystoreSource.HW_USB) || RemoteDevices.supports(keystore) || keystore.getSource().equals(KeystoreSource.SW_WATCH)).findAny();
         Optional<Keystore> bip47Keystore = signingWallet.getKeystores().stream().filter(keystore -> keystore.getSource().equals(KeystoreSource.SW_PAYMENT_CODE)).findAny();
         Optional<Keystore> cardKeystore = signingWallet.getKeystores().stream().filter(keystore -> keystore.getWalletModel().isCard()).findAny();
-        if(softwareKeystore.isEmpty() && usbKeystore.isEmpty() && bip47Keystore.isEmpty() && cardKeystore.isEmpty()) {
+        if(softwareKeystore.isEmpty() && deviceKeystore.isEmpty() && bip47Keystore.isEmpty() && cardKeystore.isEmpty()) {
             signButton.setDisable(true);
-        } else if(softwareKeystore.isEmpty() && bip47Keystore.isEmpty() && usbKeystore.isEmpty()) {
+        } else if(softwareKeystore.isEmpty() && bip47Keystore.isEmpty() && deviceKeystore.isEmpty()) {
             Glyph tapGlyph = new Glyph(FontAwesome5.FONT_NAME, FontAwesome5.Glyph.WIFI);
             tapGlyph.setFontSize(20);
             signButton.setGraphic(tapGlyph);
         } else if(softwareKeystore.isEmpty() && bip47Keystore.isEmpty()) {
-            Glyph usbGlyph = new Glyph(FontAwesome5Brands.FONT_NAME, FontAwesome5Brands.Glyph.USB);
-            usbGlyph.setFontSize(20);
-            signButton.setGraphic(usbGlyph);
+            Glyph deviceGlyph = deviceKeystore.filter(RemoteDevices::supports).isPresent()
+                    ? new Glyph(FontAwesome5.FONT_NAME, FontAwesome5.Glyph.WIFI)
+                    : new Glyph(FontAwesome5Brands.FONT_NAME, FontAwesome5Brands.Glyph.USB);
+            deviceGlyph.setFontSize(20);
+            signButton.setGraphic(deviceGlyph);
         }
     }
 

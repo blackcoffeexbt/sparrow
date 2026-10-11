@@ -2,12 +2,12 @@ package com.sparrowwallet.sparrow.io.argus;
 
 import com.sparrowwallet.drongo.OutputDescriptor;
 import com.sparrowwallet.sparrow.io.Device;
-import com.sparrowwallet.sparrow.io.DeviceDisplayAddressService;
+import com.sparrowwallet.sparrow.io.DeviceService;
 import com.sparrowwallet.sparrow.io.DisplayAddressException;
 
 import javafx.concurrent.Task;
 
-final class ArgusDisplayAddressService extends DeviceDisplayAddressService {
+final class ArgusDisplayAddressService extends DeviceService<String> {
     private final Device device;
     private final String passphrase;
     private final OutputDescriptor descriptor;

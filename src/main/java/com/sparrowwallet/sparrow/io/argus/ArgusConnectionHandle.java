@@ -3,12 +3,12 @@ package com.sparrowwallet.sparrow.io.argus;
 import com.sparrowwallet.lark.ArgusClient;
 import com.sparrowwallet.lark.DeviceException;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Keeps callbacks and the entire host operation exclusive to one paired signer. */
 final class ArgusConnectionHandle implements AutoCloseable {
     private final ArgusClient client;
-    private final ReentrantLock operationLock = new ReentrantLock();
+    private final AtomicBoolean busy = new AtomicBoolean();
     private volatile boolean closed;
 
     ArgusConnectionHandle(ArgusClient client) {
@@ -16,7 +16,7 @@ final class ArgusConnectionHandle implements AutoCloseable {
     }
 
     <T> T execute(Operation<T> operation) throws Exception {
-        if(!operationLock.tryLock()) {
+        if(!busy.compareAndSet(false, true)) {
             throw new DeviceException("An Argus request is already active");
         }
 
@@ -26,7 +26,7 @@ final class ArgusConnectionHandle implements AutoCloseable {
             }
             return operation.apply(client);
         } finally {
-            operationLock.unlock();
+            busy.set(false);
         }
     }
 

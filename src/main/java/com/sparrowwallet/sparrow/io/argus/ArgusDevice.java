@@ -5,8 +5,7 @@ import com.sparrowwallet.drongo.protocol.ScriptType;
 import com.sparrowwallet.drongo.psbt.PSBT;
 import com.sparrowwallet.drongo.wallet.WalletModel;
 import com.sparrowwallet.sparrow.io.Device;
-import com.sparrowwallet.sparrow.io.DeviceDisplayAddressService;
-import com.sparrowwallet.sparrow.io.DeviceSigningService;
+import com.sparrowwallet.sparrow.io.DeviceService;
 
 import javafx.stage.Window;
 
@@ -22,17 +21,12 @@ public final class ArgusDevice extends Device {
     }
 
     @Override
-    public boolean isRemote() {
-        return true;
-    }
-
-    @Override
     public boolean supportsScriptType(ScriptType scriptType) {
         return scriptType == ScriptType.P2WPKH;
     }
 
     @Override
-    public DeviceSigningService createSigningService(
+    public DeviceService<PSBT> createSigningService(
             String passphrase,
             PSBT psbt,
             OutputDescriptor descriptor,
@@ -43,7 +37,7 @@ public final class ArgusDevice extends Device {
     }
 
     @Override
-    public DeviceDisplayAddressService createDisplayAddressService(
+    public DeviceService<String> createDisplayAddressService(
             String passphrase,
             ScriptType scriptType,
             OutputDescriptor addressDescriptor,

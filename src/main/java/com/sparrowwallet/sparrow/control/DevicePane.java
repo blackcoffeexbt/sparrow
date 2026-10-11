@@ -77,14 +77,6 @@ public class DevicePane extends TitledDescriptionPane {
 
     private boolean defaultDevice;
 
-    private DeviceSigningService activeSignService;
-
-    public void cancelSigning() {
-        if(activeSignService != null) {
-            activeSignService.cancelOperation();
-        }
-    }
-
     public DevicePane(Wallet wallet, Device device, boolean defaultDevice, KeyDerivation defaultDerivation, KeyDerivation requiredDerivation) {
         super(device.getModel().toDisplayString(), "", "", device.getModel());
         this.deviceOperation = DeviceOperation.IMPORT;
@@ -884,9 +876,8 @@ public class DevicePane extends TitledDescriptionPane {
                 signButton.setDisable(false);
             }
         } else {
-            DeviceSigningService signPSBTService = device.createSigningService(passphrase.get(), psbt,
+            DeviceService<PSBT> signPSBTService = device.createSigningService(passphrase.get(), psbt,
                     OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration(), getScene().getWindow());
-            activeSignService = signPSBTService;
             signPSBTService.messageProperty().addListener((_, _, value) -> setDescription(value));
             signPSBTService.setOnSucceeded(workerStateEvent -> {
                 PSBT signedPsbt = signPSBTService.getValue();
@@ -930,7 +921,7 @@ public class DevicePane extends TitledDescriptionPane {
     }
 
     private void displayAddress() {
-        DeviceDisplayAddressService displayAddressService = device.createDisplayAddressService(passphrase.get(), wallet.getScriptType(), outputDescriptor,
+        DeviceService<String> displayAddressService = device.createDisplayAddressService(passphrase.get(), wallet.getScriptType(), outputDescriptor,
                 OutputDescriptor.getOutputDescriptor(wallet), wallet.getFullName(), getDeviceRegistration());
         displayAddressService.setOnSucceeded(successEvent -> {
             String address = displayAddressService.getValue();

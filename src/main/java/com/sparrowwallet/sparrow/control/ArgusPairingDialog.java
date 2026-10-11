@@ -3,8 +3,7 @@ package com.sparrowwallet.sparrow.control;
 import com.sparrowwallet.lark.argus.*;
 import com.sparrowwallet.sparrow.AppServices;
 import com.sparrowwallet.sparrow.EventManager;
-import com.sparrowwallet.sparrow.event.UsbDeviceEvent;
-import com.sparrowwallet.sparrow.io.*;
+import com.sparrowwallet.sparrow.event.RemoteDevicesChangedEvent;
 import com.sparrowwallet.sparrow.io.argus.ArgusKeychain;
 import com.sparrowwallet.sparrow.io.argus.ArgusRegistry;
 
@@ -160,7 +159,7 @@ public final class ArgusPairingDialog extends Dialog<Boolean> {
                         task.setOnSucceeded(
                                 _ -> {
                                     pairing = false;
-                                    publishDevices();
+                                    EventManager.get().post(new RemoteDevicesChangedEvent());
                                     setResult(true);
                                     close();
                                 });
@@ -229,7 +228,7 @@ public final class ArgusPairingDialog extends Dialog<Boolean> {
                         task.setOnSucceeded(
                                 event -> {
                                     refreshSaved();
-                                    publishDevices();
+                                    EventManager.get().post(new RemoteDevicesChangedEvent());
                                 });
                         task.setOnFailed(
                                 event -> {
@@ -242,13 +241,5 @@ public final class ArgusPairingDialog extends Dialog<Boolean> {
                     });
             saved.getChildren().addAll(info, forget);
         }
-    }
-
-    public static void publishDevices() {
-        var existing = AppServices.getDevices();
-        List<Device> devices = existing == null ? new ArrayList<>() : new ArrayList<>(existing);
-        devices.removeIf(d -> "argus".equals(d.getType()));
-        devices.addAll(ArgusRegistry.devices());
-        EventManager.get().post(new UsbDeviceEvent(devices));
     }
 }
